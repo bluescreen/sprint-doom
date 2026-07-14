@@ -110,14 +110,21 @@ export class Projectiles {
   }
 
   spawn(from, targetPos, cfg, text) {
-    const sprite = new THREE.Sprite(getExcuseMaterial(text));
-    sprite.scale.set(2.9, 1.29, 1);
+    // Fan of `volley` projectiles: center shot aims, the flanks block the dodge lanes
+    const n = cfg.volley || 1;
     const origin = new THREE.Vector3(from.x, 2.5, from.z);
-    const vel = new THREE.Vector3(targetPos.x, 1.5, targetPos.z)
-      .sub(origin).normalize().multiplyScalar(cfg.projSpeed);
-    sprite.position.copy(origin);
-    this.scene.add(sprite);
-    this.list.push({ sprite, vel, dmg: cfg.projDamage, life: 6 });
+    const base = new THREE.Vector3(targetPos.x, 1.5, targetPos.z).sub(origin).normalize();
+    for (let i = 0; i < n; i++) {
+      const a = (i - (n - 1) / 2) * CONFIG.boss.volleySpread;
+      const c = Math.cos(a), s = Math.sin(a);
+      const vel = new THREE.Vector3(base.x * c - base.z * s, base.y, base.x * s + base.z * c)
+        .multiplyScalar(cfg.projSpeed);
+      const sprite = new THREE.Sprite(getExcuseMaterial(text));
+      sprite.scale.set(2.9, 1.29, 1);
+      sprite.position.copy(origin);
+      this.scene.add(sprite);
+      this.list.push({ sprite, vel, dmg: cfg.projDamage, life: 6 });
+    }
   }
 
   update(dt, level, player, onHit) {

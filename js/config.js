@@ -25,14 +25,16 @@ export const CONFIG = {
   },
 
   // Skill levels after the classic Doom selection screen, denkwerk edition.
-  // hp/dmg/speed scale the customer, fire his fire interval, proj his projectile speed.
+  // hp/dmg/speed scale the customer, fire his fire interval, proj his projectile
+  // speed, wind his windup (telegraph), volley = projectiles per shot (fan),
+  // heal scales the coffee break between tickets.
   skill: 2, // index into difficulties, set from the skill screen
   difficulties: [
-    { name: 'Ich bin noch in der Probezeit.', hp: 0.6, dmg: 0.5, speed: 0.85, fire: 1.4, proj: 0.9 },
-    { name: 'Hey, nicht vor dem ersten Kaffee.', hp: 0.8, dmg: 0.75, speed: 0.92, fire: 1.2, proj: 0.95 },
-    { name: 'Feilsch mich ordentlich runter.', hp: 1, dmg: 1, speed: 1, fire: 1, proj: 1 },
-    { name: 'Ultra-Eskalation.', hp: 1.4, dmg: 1.5, speed: 1.2, fire: 0.75, proj: 1.2 },
-    { name: 'ALBTRAUM: FESTPREIS!', hp: 2.2, dmg: 3, speed: 1.5, fire: 0.45, proj: 1.5 },
+    { name: 'Ich bin noch in der Probezeit.', hp: 0.5, dmg: 0.5, speed: 0.85, fire: 1.5, proj: 0.9, wind: 1.3, volley: 1, heal: 1.5 },
+    { name: 'Hey, nicht vor dem ersten Kaffee.', hp: 0.8, dmg: 0.8, speed: 0.95, fire: 1.15, proj: 1, wind: 1.1, volley: 1, heal: 1.2 },
+    { name: 'Feilsch mich ordentlich runter.', hp: 1.1, dmg: 1.25, speed: 1.1, fire: 0.85, proj: 1.2, wind: 0.9, volley: 1, heal: 1 },
+    { name: 'Ultra-Eskalation.', hp: 1.6, dmg: 2, speed: 1.35, fire: 0.6, proj: 1.5, wind: 0.7, volley: 2, heal: 0.75 },
+    { name: 'ALBTRAUM: FESTPREIS!', hp: 2.4, dmg: 3.5, speed: 1.75, fire: 0.4, proj: 2, wind: 0.5, volley: 3, heal: 0.5 },
   ],
 
   boss: {
@@ -40,6 +42,7 @@ export const CONFIG = {
     hitRadius: 1.4,  // Trefferradius für Hitscan
     attackRange: 20,
     minDist: 4.5,    // näher kommt der Kunde nicht
+    volleySpread: 0.26, // angle (rad) between fan projectiles
   },
 
   // score = 0.4*Zeit + 0.35*Accuracy + 0.25*übrige Nerven → points = min + score*(max-min)

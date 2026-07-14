@@ -65,7 +65,7 @@ level.onDoorMove = (d) => { if (d.target === 1) sfx.door(); };
 // ---------- Input ----------
 window.addEventListener('keydown', (e) => {
   keys.add(e.code);
-  // Doom-Klassiker: Skill-Level per Taste 1–5 wählen
+  // Doom classic: pick the skill level with keys 1-5
   if (state === 'title' && !$('skill-overlay').classList.contains('hidden')) {
     const n = +e.key;
     if (n >= 1 && n <= CONFIG.difficulties.length) startGame(n - 1);
@@ -78,7 +78,7 @@ window.addEventListener('mousemove', (e) => {
 window.addEventListener('mousedown', (e) => { if (e.button === 0) mouseDown = true; });
 window.addEventListener('mouseup', (e) => { if (e.button === 0) mouseDown = false; });
 
-// Skill-Screen nach dem klassischen Doom-Auswahlbildschirm
+// Skill screen after the classic Doom selection screen
 function startGame(skill) {
   CONFIG.skill = skill;
   initAudio();

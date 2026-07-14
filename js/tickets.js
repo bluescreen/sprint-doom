@@ -37,8 +37,10 @@ export class SprintManager {
       hp: Math.round(base.hp * d.hp),
       speed: base.speed * d.speed,
       fireInterval: base.fireInterval * d.fire,
+      windup: base.windup * d.wind,
       projDamage: Math.round(base.projDamage * d.dmg),
       projSpeed: base.projSpeed * d.proj,
+      volley: d.volley,
       parTime: base.parTime * d.hp,
     };
     room.state = 'fight';
@@ -90,7 +92,7 @@ export class SprintManager {
     } else {
       this.sfx.award(res.score >= 0.55);
       this.hud.setFaceTemp(res.score >= 0.55 ? 'grin' : 'sad', 2.2);
-      const heal = CONFIG.player.coffeeHeal;
+      const heal = Math.round(CONFIG.player.coffeeHeal * CONFIG.difficulties[CONFIG.skill].heal);
       this.player.health = Math.min(CONFIG.player.maxHealth, this.player.health + heal);
       this.hud.message(`☕ Kaffeepause: +${heal} Nerven`, 2.4);
     }
