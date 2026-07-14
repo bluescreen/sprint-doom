@@ -42,12 +42,19 @@ function noise({ dur, vol = 0.2, freq = 1000, delay = 0 }) {
   src.start(t);
 }
 
-// ---------- DOOM-inspirierter Soundtrack (prozeduraler Sequencer) ----------
-// E-Moll-Chug-Riff (Achtel) + Kick/Snare/HiHat. Im Kampf: doppelte Hats + Lead-Gitarre.
-const BASS_RIFF = [0, 0, 12, 0, 0, 10, 0, 8, 0, 0, 12, 0, 0, 10, 8, 7]; // Halbtöne über E2
-const LEAD_SEQ = [12, 15, 17, 15, 12, 10, 8, 10, 12, 15, 19, 17, 15, 12, 10, 7]; // über E4
+// ---------- Doom-flavored soundtrack (procedural sequencer) ----------
+// Riff transcribed from the piano sheet: ♩=114, 4/4, E minor, f.
+// Two bars of sixteenths in [E2 E2 x] groups, x descending e' d' c' B♭ B♮ c';
+// bar 2 ends on a B♭ tied through the rest of the bar (null = keep ringing).
+// L.H.: dotted-quarter E1 ("an octave lower than written") on each downbeat.
+const RIFF = [
+  0, 0, 12, 0, 0, 10, 0, 0, 8, 0, 0, 6, 0, 0, 7, 8,          // bar 1
+  0, 0, 12, 0, 0, 10, 0, 0, 8, 0, 0, 6, null, null, null, null, // bar 2
+];
+const HELD_STEP = 27; // the tied B♭ in bar 2
+const LEAD_SEQ = [0, 1, 0, -2, 3, 1, 0, -4, 6, 5, 3, 1, 0, 1, -2, 0]; // slow wail over E4
 const E2 = 82.41, E4 = 329.63;
-const STEP_DUR = 60 / 132 / 2; // Achtel bei 132 BPM
+const STEP_DUR = 60 / 114 / 4; // sixteenths at 114 BPM
 
 let musicGain = null;
 let musicTimer = null;
@@ -65,19 +72,50 @@ function getNoiseBuf() {
   return noiseBuf;
 }
 
-function mBass(t, off) {
+let distCurve = null;
+function getDistCurve() {
+  if (!distCurve) {
+    distCurve = new Float32Array(256);
+    for (let i = 0; i < 256; i++) distCurve[i] = Math.tanh(2.5 * (i / 127.5 - 1));
+  }
+  return distCurve;
+}
+
+function mBass(t, off, accent, dur = 0.12) {
   const f = E2 * Math.pow(2, off / 12);
+  const shaper = ctx.createWaveShaper();
+  shaper.curve = getDistCurve();
   const flt = ctx.createBiquadFilter();
-  flt.type = 'lowpass'; flt.frequency.value = 520; flt.Q.value = 1;
+  flt.type = 'lowpass'; flt.frequency.value = accent ? 700 : 460; flt.Q.value = 1;
   const g = ctx.createGain();
   g.gain.setValueAtTime(0.001, t);
-  g.gain.linearRampToValueAtTime(0.3, t + 0.012);
-  g.gain.exponentialRampToValueAtTime(0.001, t + 0.19);
-  flt.connect(g); g.connect(musicGain);
-  for (const det of [-6, 6]) {
+  g.gain.linearRampToValueAtTime(accent ? 0.24 : 0.18, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  shaper.connect(flt); flt.connect(g); g.connect(musicGain);
+  // Power chord: detuned root pair + fifth
+  for (const [semi, det] of [[0, -5], [0, 5], [7, 0]]) {
     const o = ctx.createOscillator();
-    o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det;
-    o.connect(flt); o.start(t); o.stop(t + 0.22);
+    o.type = 'sawtooth';
+    o.frequency.value = f * Math.pow(2, semi / 12);
+    o.detune.value = det;
+    o.connect(shaper); o.start(t); o.stop(t + dur + 0.02);
+  }
+}
+
+function mDrone(t, dur) {
+  const flt = ctx.createBiquadFilter();
+  flt.type = 'lowpass'; flt.frequency.value = 220;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.linearRampToValueAtTime(0.14, t + 0.03);
+  g.gain.setValueAtTime(0.14, t + dur * 0.7);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  flt.connect(g); g.connect(musicGain);
+  for (const type of ['sine', 'sawtooth']) {
+    const o = ctx.createOscillator();
+    o.type = type;
+    o.frequency.value = E2 / 2; // sounds E1 — "Play L.H. an octave lower than written"
+    o.connect(flt); o.start(t); o.stop(t + dur + 0.05);
   }
 }
 
@@ -122,11 +160,11 @@ function mLead(t, off, dur) {
   o.type = 'square';
   o.frequency.value = E4 * Math.pow(2, off / 12);
   const lfo = ctx.createOscillator();
-  lfo.frequency.value = 5.5;
-  const lfoG = ctx.createGain(); lfoG.gain.value = 14; // Vibrato in Cents
+  lfo.frequency.value = 4.5;
+  const lfoG = ctx.createGain(); lfoG.gain.value = 20; // Vibrato in Cents
   lfo.connect(lfoG); lfoG.connect(o.detune);
   const flt = ctx.createBiquadFilter();
-  flt.type = 'lowpass'; flt.frequency.value = 2600;
+  flt.type = 'lowpass'; flt.frequency.value = 1800;
   const g = ctx.createGain();
   g.gain.setValueAtTime(0.001, t);
   g.gain.linearRampToValueAtTime(0.1, t + 0.02);
@@ -138,13 +176,20 @@ function mLead(t, off, dur) {
 }
 
 function playMusicStep(s, t) {
-  mBass(t, BASS_RIFF[s % 16]);
-  if (s % 4 === 0) mKick(t);
-  if (s % 8 === 4) mSnare(t);
-  mHat(t, s % 4 === 0 ? 0.08 : 0.05);
+  const sub = s % 4;        // sixteenth within the beat
+  if (s % 16 === 0) mDrone(t, STEP_DUR * 6); // L.H. dotted-quarter E1 on each downbeat
+  const r = s % 32;
+  const off = RIFF[r];
+  // Melodic notes (off != 0) get the accent; the tied B♭ rings out the bar
+  if (off !== null) mBass(t, off, off !== 0, r === HELD_STEP ? STEP_DUR * 5 : 0.12);
+  // Half-time drums: kick on 1 + and-of-2, snare on 3
+  if (s % 16 === 0 || s % 16 === 6) mKick(t);
+  if (s % 16 === 8) mSnare(t);
+  if (sub % 2 === 0) mHat(t, sub === 0 ? 0.05 : 0.035);
   if (fightMode) {
-    mHat(t + STEP_DUR / 2, 0.045); // 16tel-Hats im Kampf
-    if (s % 2 === 0) mLead(t, LEAD_SEQ[(s / 2) % 16], STEP_DUR * 1.9);
+    if (s % 16 === 10) mKick(t); // extra kick push
+    if (sub % 2 === 1) mHat(t, 0.03); // sixteenth hats
+    if (sub === 0) mLead(t, LEAD_SEQ[(s >> 2) % 16], STEP_DUR * 3.6);
   }
 }
 
@@ -157,7 +202,7 @@ export const music = {
     musicTimer = setInterval(() => {
       while (musicNextT < ctx.currentTime + 0.18) {
         playMusicStep(musicStep, musicNextT);
-        musicStep = (musicStep + 1) % 32;
+        musicStep = (musicStep + 1) % 64;
         musicNextT += STEP_DUR;
       }
     }, 45);

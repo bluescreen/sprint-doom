@@ -18,8 +18,8 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
 renderer.setPixelRatio(1);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0a0a12);
-scene.fog = new THREE.Fog(0x0a0a12, 10, 58);
+scene.background = new THREE.Color(0x101014);
+scene.fog = new THREE.Fog(0x101014, 12, 66);
 
 const camera = new THREE.PerspectiveCamera(72, 1, 0.1, 200);
 
@@ -77,7 +77,7 @@ $('title-overlay').addEventListener('click', () => {
   $('title-overlay').classList.add('hidden');
   state = 'playing';
   canvas.requestPointerLock();
-  hud.message('SPRINT PLANNING: Das Board zeigt deine 5 Tickets. Geh nach rechts zum ersten! →', 5);
+  hud.message('SPRINT PLANNING: Das Board zeigt deine 5 Tickets. Termin 1: Konferenzraum 1 →', 5);
 });
 
 $('pause-overlay').addEventListener('click', () => {

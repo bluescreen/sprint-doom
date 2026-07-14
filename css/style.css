@@ -140,4 +140,50 @@ body { font-family: "Courier New", ui-monospace, monospace; color: #e8e8e8; user
 }
 #restart-btn:hover { background: #ff2b96; }
 
+/* ---------- denkwerk Brand-Overlays (Start & Review) ---------- */
+/* Farben aus dem denkwerk-Master: Creme #F5F0EB, Marker-Gelb #FFE449,
+   Violett #BD95FF, Olive #697D55, Braun #917059, Koralle #FF644E, Grau #5E5E5E */
+.overlay.brand {
+  background: #F5F0EB;
+  color: #000;
+  font-family: "Studio Feixen Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  text-align: left;
+}
+.overlay.brand .ov-inner { max-width: 920px; width: 100%; padding: 32px 6vw; }
+.ov-topline { font-size: 15px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 5vh; }
+.overlay.brand .ov-title {
+  font-weight: 400; letter-spacing: -0.02em; line-height: 0.95;
+  font-size: clamp(64px, 11vw, 150px);
+  color: #000; text-shadow: none;
+}
+.overlay.brand .ov-title.small { font-size: clamp(44px, 6vw, 84px); }
+.marker { background: #FFE449; padding: 0 0.08em; }
+.overlay.brand .accent { background: #BD95FF; color: #000; padding: 0 0.2em; }
+.overlay.brand .ov-sub { color: #5E5E5E; margin: 3vh 0 5vh; }
+.overlay.brand .ov-story { color: #000; font-size: 17px; line-height: 1.8; margin: 4vh 0 3vh; }
+.overlay.brand .ov-controls { color: #5E5E5E; margin-bottom: 5vh; }
+.overlay.brand .ov-cta { color: #000; }
+
+.overlay.brand #end-verdict { font-weight: 400; max-width: 760px; margin: 3vh 0; }
+.overlay.brand #end-verdict.win { color: #697D55; }
+.overlay.brand #end-verdict.under { color: #917059; }
+.overlay.brand #end-verdict.over { color: #FF644E; }
+.overlay.brand #end-stats { margin: 0 0 28px; }
+.overlay.brand #end-stats th {
+  color: #5E5E5E; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+  border-bottom: 2px solid #000;
+}
+.overlay.brand #end-stats td { border-bottom: 1px solid #D5D5D5; }
+.overlay.brand #end-stats td.num, .overlay.brand #end-stats th.num { color: #000; }
+.overlay.brand #end-stats td.lost { color: #FF644E; }
+.overlay.brand #end-total {
+  display: inline-block; color: #000; background: #FFE449;
+  font-weight: 400; padding: 4px 14px; margin-bottom: 5vh;
+}
+.overlay.brand #restart-btn {
+  background: #000; color: #F5F0EB; border: none; box-shadow: none;
+  font-weight: 400; letter-spacing: 1px; padding: 14px 34px; display: block;
+}
+.overlay.brand #restart-btn:hover { background: #BD95FF; color: #000; }
+
 .hidden { display: none !important; }

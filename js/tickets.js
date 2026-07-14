@@ -24,7 +24,7 @@ export class SprintManager {
   update(time) {
     if (this.finished || this.phase !== 'roam' || this.current >= 5) return;
     const room = this.level.rooms[this.current];
-    if (this.player.pos.x > room.entryX) this.startFight(time);
+    if (room.inside(this.player.pos.x, this.player.pos.z)) this.startFight(time);
   }
 
   startFight(time) {

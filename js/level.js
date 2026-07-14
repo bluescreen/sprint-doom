@@ -1,68 +1,101 @@
-// Grid-basiertes Level: Intro-Raum + 5 Ticket-Räume, verbunden durch Korridore mit Schiebetüren.
+// Grid-Level nach dem 3.BA-Grundriss der denkwerk-Etage (399 m²):
+// KONFIZONE als zentraler Korridor, die Meetingräume (= Ticket-Räume) im Süden
+// mit Schiebetüren + Glaswänden, Technik/Kicker/Archiv/Lager/Küche im Norden.
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
-import { makeWallTexture, makeFloorTexture, makeCeilingTexture, makeDoorTexture, makeBoardTexture } from './textures.js';
+import {
+  makeWallTexture, makeFloorTexture, makeCeilingTexture, makeDoorTexture,
+  makeGlassDoorTexture, makeBoardTexture, makeWindowTexture, makeGlassTexture,
+  makeSignTexture, makeVaultTexture,
+} from './textures.js';
 
 const T = CONFIG.tileSize;
 
+// Legende: '#' Wand · '.' frei · 'W' Außenfenster · 'G' Glaswand · '1'–'5' Schiebetür Ticket-Raum
+const MAP = [
+  '##################################################',
+  '#......#.....#.....#.....#...#.............#.....#',
+  '#......#.....#.....#.....#...#...................#',
+  '#......#.....#.....#.....#...#.............#.....#',
+  '#......#.....#.....#.....#...#.............#.....#',
+  '#......#.....#.....#.....#...#.............#.....#',
+  '#......#.....#.....#.....#...#.............#.....#',
+  '#####.####.#####.#####.####.##.............#######',
+  '#................................................#',
+  '#GGG11GGGGGGGG22GGGG33GGGGGG44GGGGGGGG55GGGG##.###',
+  '#...........#.....#.....#.........#.........#....#',
+  '#...........#.....#.....#.........#.........#....W',
+  '#...........#.....#.....#.........#.........#....W',
+  '#...........#.....#.....#.........#.........#....W',
+  '#...........#.....#.....#.........#.........#....W',
+  '#...........#.....#.....#.........#.........#....#',
+  '#...........#.....#.....#.........#.........#....#',
+  '#...........#.....#.....#.........#.........#....#',
+  '#...........#.....#.....#.........#.........#....#',
+  '##WWWWWWWWWW##WWW###WWW###WWWWWWW###WWWWWWW#######',
+];
+
+const DOOR_ROW = 9;
+
+// Ticket-Räume = die 5 Meetingräume südlich der Konfizone (Spaltenbereiche in Tiles).
+const ROOM_DEFS = [
+  { name: 'Konferenzraum 1', x0: 1, x1: 11 },
+  { name: 'Besprechungsraum 1', x0: 13, x1: 17 },
+  { name: 'Besprechungsraum 2', x0: 19, x1: 23 },
+  { name: 'Workshopraum', x0: 25, x1: 33 },
+  { name: 'Konferenzraum 2', x0: 35, x1: 43 },
+];
+
 export function buildLevel(scene) {
-  const introW = 10, roomW = 12, corW = 4, ROWS = 17;
-  const COLS = 1 + introW + 5 * (corW + roomW) + 1;
+  const ROWS = MAP.length, COLS = MAP[0].length;
 
-  // 1 = Wand, 0 = begehbar
-  const grid = Array.from({ length: ROWS }, () => new Array(COLS).fill(1));
-  const carve = (c0, r0, w, h) => {
-    for (let r = r0; r < r0 + h; r++)
-      for (let c = c0; c < c0 + w; c++) grid[r][c] = 0;
-  };
+  // 0 = begehbar, 1 = Wand, 2 = Fenster, 3 = Glaswand (2/3 solide, eigene Textur)
+  const grid = MAP.map((row) => [...row].map((ch) =>
+    ch === '#' ? 1 : ch === 'W' ? 2 : ch === 'G' ? 3 : 0));
 
-  carve(1, 2, introW, 13); // Intro-Raum
-  const rooms = [];
-  let x = 1 + introW;
-  for (let i = 0; i < 5; i++) {
-    carve(x, 7, corW, 3); // Korridor (Zeilen 7–9)
-    const doorCol = x + 1;
-    const rx = x + corW;
-    carve(rx, 2, roomW, 13); // Ticket-Raum
-    rooms.push({
-      index: i,
-      doorCol,
-      x0: rx,
-      entryX: (rx + 2) * T,
-      bossSpawn: { x: (rx + roomW - 2.5) * T, z: 8.5 * T },
-      state: 'pending',
-    });
-    x = rx + roomW;
-  }
+  const rooms = ROOM_DEFS.map((def, i) => ({
+    index: i,
+    name: def.name,
+    x0: def.x0, x1: def.x1,
+    bossSpawn: { x: ((def.x0 + def.x1 + 1) / 2) * T, z: 17 * T },
+    inside: (x, z) => z > 10.5 * T && x > def.x0 * T && x < (def.x1 + 1) * T,
+    state: 'pending',
+  }));
 
-  // ---------- Türen ----------
-  const doorTex = makeDoorTexture();
-  const doors = rooms.map((room) => {
+  // ---------- Türen (Schiebetüren in der Südwand der Konfizone) ----------
+  const doorCols = [[], [], [], [], []];
+  [...MAP[DOOR_ROW]].forEach((ch, c) => {
+    if (ch >= '1' && ch <= '5') doorCols[+ch - 1].push(c);
+  });
+
+  const glassDoorTex = makeGlassDoorTexture();
+  const doors = doorCols.map((cols, i) => {
+    const c0 = cols[0], c1 = cols[cols.length - 1];
     const mesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.7, CONFIG.wallHeight, 3 * T),
-      new THREE.MeshBasicMaterial({ map: doorTex })
+      new THREE.BoxGeometry((c1 - c0 + 1) * T, CONFIG.wallHeight, 0.7),
+      new THREE.MeshBasicMaterial({ map: glassDoorTex, transparent: true })
     );
-    mesh.position.set((room.doorCol + 0.5) * T, CONFIG.wallHeight / 2, 8.5 * T);
+    mesh.position.set(((c0 + c1 + 1) / 2) * T, CONFIG.wallHeight / 2, (DOOR_ROW + 0.5) * T);
     scene.add(mesh);
     return {
-      mesh, col: room.doorCol, index: room.index,
+      mesh, c0, c1, index: i,
       baseY: CONFIG.wallHeight / 2,
       open: 0, target: 0, lastTarget: 0,
-      locked: room.index > 0, // nur Tür zu Ticket 1 ist anfangs frei
+      locked: i > 0, // nur Konferenzraum 1 ist anfangs frei
     };
   });
 
   function isSolid(c, r) {
     if (c < 0 || r < 0 || c >= COLS || r >= ROWS) return true;
-    if (grid[r][c] === 1) return true;
-    if (r >= 7 && r <= 9) {
-      for (const d of doors) if (d.col === c && d.open < 0.7) return true;
+    if (grid[r][c] >= 1) return true;
+    if (r === DOOR_ROW) {
+      for (const d of doors) if (c >= d.c0 && c <= d.c1 && d.open < 0.7) return true;
     }
     return false;
   }
 
   // Von Möbeln belegte Zellen: blockieren Bewegung, aber nicht Schüsse/Projektile
-  // (man schießt über einen Schreibtisch hinweg).
+  // (man schießt über einen Konferenztisch hinweg).
   const blocked = new Set();
   const block = (c, r) => blocked.add(c + ',' + r);
   function isSolidMove(c, r) {
@@ -95,8 +128,8 @@ export function buildLevel(scene) {
 
   function updateDoors(dt, playerPos) {
     for (const d of doors) {
-      const dx = playerPos.x - (d.col + 0.5) * T;
-      const dz = playerPos.z - 8.5 * T;
+      const dx = playerPos.x - ((d.c0 + d.c1 + 1) / 2) * T;
+      const dz = playerPos.z - (DOOR_ROW + 0.5) * T;
       const near = Math.hypot(dx, dz) < 9;
       d.target = (!d.locked && near) ? 1 : 0;
       if (d.target !== d.lastTarget) {
@@ -112,27 +145,36 @@ export function buildLevel(scene) {
     }
   }
 
-  // ---------- Geometrie ----------
-  const wallTex = makeWallTexture();
-  let wallCount = 0;
-  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (grid[r][c] === 1) wallCount++;
-  const walls = new THREE.InstancedMesh(
-    new THREE.BoxGeometry(T, CONFIG.wallHeight, T),
-    new THREE.MeshBasicMaterial({ map: wallTex }),
-    wallCount
-  );
+  // ---------- Geometrie: Wände, Fenster, Glaswände als InstancedMeshes ----------
+  // Glas (Typ 3) rendert mit echter Transparenz; depthWrite aus, damit
+  // Sprites (Kunde, Ausreden) dahinter korrekt durchscheinen.
+  const typeTex = { 1: makeWallTexture(), 2: makeWindowTexture(), 3: makeGlassTexture() };
   const m = new THREE.Matrix4();
-  let idx = 0;
-  for (let r = 0; r < ROWS; r++)
-    for (let c = 0; c < COLS; c++)
-      if (grid[r][c] === 1) {
-        m.setPosition((c + 0.5) * T, CONFIG.wallHeight / 2, (r + 0.5) * T);
-        walls.setMatrixAt(idx++, m);
-      }
-  scene.add(walls);
+  for (const type of [1, 2, 3]) {
+    let count = 0;
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (grid[r][c] === type) count++;
+    const im = new THREE.InstancedMesh(
+      // Glas ist eine dünne Scheibe in Flucht mit den Schiebetüren, kein voller Block
+      type === 3
+        ? new THREE.BoxGeometry(T, CONFIG.wallHeight, 0.35)
+        : new THREE.BoxGeometry(T, CONFIG.wallHeight, T),
+      new THREE.MeshBasicMaterial(
+        type === 3 ? { map: typeTex[3], transparent: true, depthWrite: false } : { map: typeTex[type] }
+      ),
+      count
+    );
+    let idx = 0;
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        if (grid[r][c] === type) {
+          m.setPosition((c + 0.5) * T, CONFIG.wallHeight / 2, (r + 0.5) * T);
+          im.setMatrixAt(idx++, m);
+        }
+    scene.add(im);
+  }
 
   const floorTex = makeFloorTexture();
-  floorTex.repeat.set(COLS, ROWS);
+  floorTex.repeat.set(COLS / 2, ROWS / 2); // 2×2 Kacheln pro Textur — weniger sichtbare Wiederholung
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(COLS * T, ROWS * T),
     new THREE.MeshBasicMaterial({ map: floorTex })
@@ -141,28 +183,106 @@ export function buildLevel(scene) {
   floor.position.set(COLS * T / 2, 0, ROWS * T / 2);
   scene.add(floor);
 
-  const ceilTex = makeCeilingTexture();
-  ceilTex.repeat.set(COLS, ROWS);
-  const ceiling = new THREE.Mesh(
-    new THREE.PlaneGeometry(COLS * T, ROWS * T),
-    new THREE.MeshBasicMaterial({ map: ceilTex })
-  );
-  ceiling.rotation.x = Math.PI / 2;
-  ceiling.position.set(COLS * T / 2, CONFIG.wallHeight, ROWS * T / 2);
-  scene.add(ceiling);
+  // Flache Sichtbeton-Decke über den Räumen; die Konfizone (Zeilen 7–10) bleibt frei
+  // für das Tonnengewölbe.
+  const flatCeiling = (r0, r1) => {
+    const tex = makeCeilingTexture();
+    tex.repeat.set(COLS, r1 - r0);
+    const p = new THREE.Mesh(
+      new THREE.PlaneGeometry(COLS * T, (r1 - r0) * T),
+      new THREE.MeshBasicMaterial({ map: tex })
+    );
+    p.rotation.x = Math.PI / 2;
+    p.position.set(COLS * T / 2, CONFIG.wallHeight, ((r0 + r1) / 2) * T);
+    scene.add(p);
+  };
+  flatCeiling(0, 8);
+  flatCeiling(9, ROWS);
 
-  // Sprint-Board an der Nordwand des Intro-Raums
+  // Tonnengewölbe über der schmalen Konfizone — der Bogen aus dem Flur-Foto (bow.png)
+  const vaultTex = makeVaultTexture();
+  vaultTex.repeat.set(1, 48);
+  const vaultGeo = new THREE.CylinderGeometry(T / 2, T / 2, 48 * T, 16, 1, true, 0, Math.PI);
+  vaultGeo.rotateZ(Math.PI / 2);
+  const vault = new THREE.Mesh(
+    vaultGeo,
+    new THREE.MeshBasicMaterial({ map: vaultTex, side: THREE.BackSide })
+  );
+  vault.position.set(25 * T, CONFIG.wallHeight, 8.5 * T);
+  vault.scale.y = 0.7;
+  scene.add(vault);
+
+  const capMat = new THREE.MeshBasicMaterial({ color: 0xddd9d2 });
+  const capGeo = new THREE.CircleGeometry(T / 2, 16, 0, Math.PI);
+  for (const [cx, ry] of [[T + 0.05, Math.PI / 2], [49 * T - 0.05, -Math.PI / 2]]) {
+    const cap = new THREE.Mesh(capGeo, capMat);
+    cap.position.set(cx, CONFIG.wallHeight, 8.5 * T);
+    cap.scale.y = 0.7;
+    cap.rotation.y = ry;
+    scene.add(cap);
+  }
+
+  // Warme Wandleuchten an der Nordwand — die Lichterreihe aus bow.png
+  const sconceBar = new THREE.MeshBasicMaterial({ color: 0xffd9a0 });
+  const sconceBack = new THREE.MeshBasicMaterial({ color: 0x3a3d45 });
+  for (const x of [18, 38, 52, 68, 87, 102, 178, 190]) {
+    const back = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.18, 0.06), sconceBack);
+    back.position.set(x, 3.3, 8 * T + 0.05);
+    scene.add(back);
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.1, 0.08), sconceBar);
+    bar.position.set(x, 3.3, 8 * T + 0.09);
+    scene.add(bar);
+  }
+
+  // ---------- Beschilderung ----------
+  const sign = (text, x, y, z, ry = 0, w = 4.4, h = 0.66, opts) => {
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, h),
+      new THREE.MeshBasicMaterial({ map: makeSignTexture(text, opts) })
+    );
+    mesh.position.set(x, y, z);
+    mesh.rotation.y = ry;
+    scene.add(mesh);
+  };
+
+  // Türschilder der Meetingräume, zur Konfizone gerichtet
+  doors.forEach((d, i) => {
+    sign(rooms[i].name.toUpperCase(), ((d.c0 + d.c1 + 1) / 2) * T, 3.5, DOOR_ROW * T - 0.06, Math.PI);
+  });
+  sign('FLÜGELRAUM', 46.5 * T, 3.5, DOOR_ROW * T - 0.06, Math.PI, 3.6, 0.56);
+
+  // Nordräume: Schilder über den Türöffnungen (Südseite der Wand in Zeile 6)
+  const northSigns = [
+    ['TECHNIKRAUM', 5], ['KICKERRAUM', 10], ['ARCHIV FIBU', 16],
+    ['OFFICELAGER 1', 22], ['KÜCHE 2', 27],
+  ];
+  for (const [name, c] of northSigns) sign(name, (c + 0.5) * T, 3.5, 8 * T + 0.06, 0, 3.6, 0.56);
+  sign('WC', 43.5 * T, 3.0, 2.5 * T, -Math.PI / 2, 1.4, 0.56);
+
+  // Konfizone-Schriftzug + Fluchtweg + Brandschutztür (T30RS) am Westende
+  sign('KONFIZONE', 19.5 * T, 3.3, 8 * T + 0.06, 0, 14, 1.5, { bg: '#ffe449', fg: '#000000', accent: '#000000' });
+  sign('→ EXIT / TREPPENHAUS', (COLS - 1) * T - 0.06, 3.2, 8.5 * T, -Math.PI / 2, 5, 0.8, { bg: '#0a7a3a', fg: '#ffffff', accent: '#ffffff' });
+  const fireDoor = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.4, 3.8),
+    new THREE.MeshBasicMaterial({ map: makeDoorTexture() })
+  );
+  fireDoor.position.set(T + 0.06, 1.9, 8.5 * T);
+  fireDoor.rotation.y = Math.PI / 2;
+  scene.add(fireDoor);
+  sign('T30RS — BRANDSCHUTZTÜR', T + 0.06, 3.6, 8.5 * T, Math.PI / 2, 3.4, 0.5);
+
+  // Sprint-Board an der Nordwand der Konfizone, nahe Spawn
   const board = new THREE.Mesh(
     new THREE.PlaneGeometry(9, 3.6),
     new THREE.MeshBasicMaterial({ map: makeBoardTexture(CONFIG.tickets) })
   );
-  board.position.set(6 * T, 2.1, 2 * T + 0.06);
+  board.position.set(7.5 * T, 2.1, 8 * T + 0.06);
   scene.add(board);
 
   return {
     grid, cols: COLS, rows: ROWS, T,
     rooms, doors,
-    playerSpawn: { x: 3.5 * T, z: 8.5 * T },
+    playerSpawn: { x: 2.5 * T, z: 8.5 * T },
     isSolid, isSolidMove, isSolidWorld, raycastWall, updateDoors, block,
     set onDoorMove(fn) { onDoorMove = fn; },
   };

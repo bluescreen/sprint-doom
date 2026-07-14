@@ -143,7 +143,7 @@ export class Hud {
     if (total >= min && total <= max) {
       v.textContent = `SPRINT ERFOLGREICH! ${total} SP — faire Punkte, zufriedenes Team, zähneknirschender Kunde. So muss das.`;
       v.className = 'win';
-      $('end-title').textContent = '★ SPRINT REVIEW ★';
+      $('end-title').innerHTML = 'SPRINT <span class="marker">REVIEW</span>';
     } else if (total < min) {
       v.textContent = `NUR ${total} SP — der Kunde kam zu billig davon. denkwerk zahlt drauf, das Team macht Überstunden umsonst.`;
       v.className = 'under';
