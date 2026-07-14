@@ -11,6 +11,8 @@ export class Player {
     this.pitch = 0;
     this.health = CONFIG.player.maxHealth;
     this.moving = false;
+    this.vy = 0;
+    this.grounded = true;
   }
 
   onMouseMove(dx, dy) {
@@ -20,6 +22,21 @@ export class Player {
   }
 
   update(dt, keys) {
+    // Sprung: nur vom Boden ab, volle Luftkontrolle (arcade)
+    if (keys.has('Space') && this.grounded) {
+      this.vy = CONFIG.player.jumpSpeed;
+      this.grounded = false;
+    }
+    if (!this.grounded) {
+      this.vy -= CONFIG.player.gravity * dt;
+      this.pos.y += this.vy * dt;
+      if (this.pos.y <= CONFIG.player.eyeHeight) {
+        this.pos.y = CONFIG.player.eyeHeight;
+        this.vy = 0;
+        this.grounded = true;
+      }
+    }
+
     let fw = 0, str = 0;
     if (keys.has('KeyW') || keys.has('ArrowUp')) fw += 1;
     if (keys.has('KeyS') || keys.has('ArrowDown')) fw -= 1;

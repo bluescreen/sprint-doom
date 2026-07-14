@@ -65,6 +65,7 @@ level.onDoorMove = (d) => { if (d.target === 1) sfx.door(); };
 // ---------- Input ----------
 window.addEventListener('keydown', (e) => {
   keys.add(e.code);
+  if (e.code === 'Space') e.preventDefault(); // kein Page-Scroll beim Springen
   // Doom classic: pick the skill level with keys 1-5
   if (state === 'title' && !$('skill-overlay').classList.contains('hidden')) {
     const n = +e.key;

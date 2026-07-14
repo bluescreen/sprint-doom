@@ -41,6 +41,7 @@ export class SprintManager {
       projDamage: Math.round(base.projDamage * d.dmg),
       projSpeed: base.projSpeed * d.proj,
       volley: d.volley,
+      patterns: d.patterns,
       parTime: base.parTime * d.hp,
     };
     room.state = 'fight';
