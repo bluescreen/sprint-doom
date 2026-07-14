@@ -100,6 +100,9 @@ CONFIG.difficulties.forEach((d, i) => {
 $('title-overlay').addEventListener('click', () => {
   $('title-overlay').classList.add('hidden');
   $('skill-overlay').classList.remove('hidden');
+  // Erster User-Gesture: ab hier darf WebAudio spielen
+  initAudio();
+  music.startTitle();
 });
 
 $('pause-overlay').addEventListener('click', () => {

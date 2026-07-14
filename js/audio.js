@@ -249,9 +249,152 @@ function playMusicStep(s, t) {
   }
 }
 
+// ---------- Epic title theme (slow cinematic loop, E minor) ----------
+const T_STEP = 60 / 72 / 2; // eighths at 72 BPM
+const T_CHORDS = [0, 8, 10, 6]; // Em, C, D, B♭ power chords (semitones above E2)
+// Soaring lead over E4, one phrase across the 4 bars; B♭ brings the dread home.
+const T_MEL = (() => {
+  const phrase = [
+    [0, 6], [3, 1], [5, 1],   // bar 1: long E, G-A pickup
+    [7, 4], [8, 2], [7, 2],   // bar 2: B, C, B
+    [10, 6], [12, 2],         // bar 3: D rising to high E
+    [6, 4], [7, 4],           // bar 4: tritone B♭, resolve to B
+  ];
+  const steps = []; let i = 0;
+  for (const [off, len] of phrase) { steps[i] = { off, dur: len }; i += len; }
+  return steps;
+})();
+
+let titleTimer = null;
+let titleStep = 0;
+let titleNextT = 0;
+
+function tPad(t, off, dur = T_STEP * 8) {
+  const base = E2 * Math.pow(2, off / 12);
+  const flt = ctx.createBiquadFilter();
+  flt.type = 'lowpass';
+  flt.frequency.setValueAtTime(600, t);
+  flt.frequency.linearRampToValueAtTime(1400, t + dur * 0.6);
+  flt.frequency.linearRampToValueAtTime(700, t + dur);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.linearRampToValueAtTime(0.11, t + 0.7);
+  g.gain.setValueAtTime(0.11, t + dur * 0.8);
+  g.gain.linearRampToValueAtTime(0.001, t + dur + 0.2);
+  flt.connect(g); g.connect(musicGain);
+  // Root + fifth + octave, each as a detuned saw pair — wide and heavy
+  for (const semi of [0, 7, 12]) {
+    for (const det of [-7, 7]) {
+      const o = ctx.createOscillator();
+      o.type = 'sawtooth';
+      o.frequency.value = base * Math.pow(2, semi / 12);
+      o.detune.value = det;
+      o.connect(flt); o.start(t); o.stop(t + dur + 0.25);
+    }
+  }
+}
+
+function tBass(t, off, dur = T_STEP * 4) {
+  const flt = ctx.createBiquadFilter();
+  flt.type = 'lowpass'; flt.frequency.value = 300;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.linearRampToValueAtTime(0.2, t + 0.03);
+  g.gain.setValueAtTime(0.2, t + dur * 0.7);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  flt.connect(g); g.connect(musicGain);
+  for (const type of ['sine', 'sawtooth']) {
+    const o = ctx.createOscillator();
+    o.type = type;
+    o.frequency.value = (E2 / 2) * Math.pow(2, off / 12); // sounds around E1
+    o.connect(flt); o.start(t); o.stop(t + dur + 0.05);
+  }
+}
+
+function tTimp(t, vol = 1) {
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(90, t);
+  o.frequency.exponentialRampToValueAtTime(38, t + 0.4);
+  g.gain.setValueAtTime(0.55 * vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+  o.connect(g); g.connect(musicGain);
+  o.start(t); o.stop(t + 0.55);
+  // mallet thud
+  const src = ctx.createBufferSource();
+  src.buffer = getNoiseBuf();
+  const flt = ctx.createBiquadFilter();
+  flt.type = 'lowpass'; flt.frequency.value = 400;
+  const ng = ctx.createGain();
+  ng.gain.setValueAtTime(0.09 * vol, t);
+  ng.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+  src.connect(flt); flt.connect(ng); ng.connect(musicGain);
+  src.start(t); src.stop(t + 0.1);
+}
+
+function tLead(t, off, dur) {
+  const flt = ctx.createBiquadFilter();
+  flt.type = 'lowpass'; flt.frequency.value = 1000;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.linearRampToValueAtTime(0.09, t + 0.08);
+  g.gain.setValueAtTime(0.09, t + dur * 0.75);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  flt.connect(g); g.connect(musicGain);
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = 4.2;
+  const lfoG = ctx.createGain(); lfoG.gain.value = 14; // gentle vibrato in cents
+  lfo.connect(lfoG);
+  for (const det of [-5, 5]) { // horn-like detuned saw pair
+    const o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.value = E4 * Math.pow(2, off / 12);
+    o.detune.value = det;
+    lfoG.connect(o.detune);
+    o.connect(flt);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  lfo.start(t); lfo.stop(t + dur + 0.05);
+}
+
+function playTitleStep(s, t) {
+  const bar = (s >> 3) % 4;
+  const sub = s % 8;
+  if (sub === 0) {
+    tPad(t, T_CHORDS[bar]);
+    tBass(t, T_CHORDS[bar]);
+    tTimp(t, 1);
+    if (bar === 0) mCrash(t); // cymbal wash on each loop start
+  }
+  if (sub === 4) tBass(t, T_CHORDS[bar]);
+  // "dum-DUM" timpani pickup into the next chord
+  if (sub === 6) tTimp(t, 0.4);
+  if (sub === 7) tTimp(t, 0.65);
+  const n = T_MEL[s % 32];
+  if (n) tLead(t, n.off, T_STEP * n.dur * 0.95);
+}
+
 export const music = {
+  startTitle() {
+    if (!ctx || titleTimer || musicTimer) return;
+    ensureMusicGain();
+    titleStep = 0;
+    titleNextT = ctx.currentTime + 0.1;
+    titleTimer = setInterval(() => {
+      while (titleNextT < ctx.currentTime + 0.25) {
+        playTitleStep(titleStep, titleNextT);
+        titleStep = (titleStep + 1) % 32;
+        titleNextT += T_STEP;
+      }
+    }, 60);
+  },
+  stopTitle() {
+    if (titleTimer) { clearInterval(titleTimer); titleTimer = null; }
+  },
   start() {
     if (!ctx || musicTimer) return;
+    this.stopTitle();
     ensureMusicGain();
     musicStep = 0;
     musicNextT = ctx.currentTime + 0.1;
@@ -264,6 +407,7 @@ export const music = {
     }, 45);
   },
   stop() {
+    this.stopTitle();
     if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
     fightMode = false;
   },
