@@ -1,0 +1,143 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+body { font-family: "Courier New", ui-monospace, monospace; color: #e8e8e8; user-select: none; }
+
+#game {
+  position: fixed; inset: 0;
+  width: 100vw; height: 100vh;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* ---------- Waffe ---------- */
+#weapon-wrap {
+  position: fixed; bottom: 74px; left: 50%; margin-left: -60px;
+  pointer-events: none; z-index: 5;
+}
+#weapon {
+  width: 336px; height: 252px;
+  image-rendering: pixelated;
+}
+
+/* ---------- HUD-Kleinteile ---------- */
+#crosshair {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -54%);
+  font-size: 22px; color: rgba(255,255,255,0.85); text-shadow: 1px 1px 0 #000;
+  pointer-events: none; z-index: 6;
+}
+#dmg-flash {
+  position: fixed; inset: 0; background: #c1272d; opacity: 0;
+  transition: opacity 0.35s ease-out; pointer-events: none; z-index: 7;
+}
+#scanlines {
+  position: fixed; inset: 0; pointer-events: none; z-index: 20;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.16) 0px, rgba(0,0,0,0.16) 1px, transparent 1px, transparent 3px);
+  mix-blend-mode: multiply;
+}
+
+/* ---------- Boss-Bar ---------- */
+#boss-wrap {
+  position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+  width: min(560px, 70vw); z-index: 8; text-align: center;
+}
+#boss-title {
+  font-weight: bold; letter-spacing: 2px; font-size: 14px;
+  color: #ffb3c1; text-shadow: 2px 2px 0 #000; margin-bottom: 4px;
+  text-transform: uppercase;
+}
+#boss-bar { height: 14px; background: #1a1016; border: 2px solid #000; box-shadow: 0 0 0 1px #5a2030; }
+#boss-fill { height: 100%; width: 100%; background: linear-gradient(#e05070, #a02040); transition: width 0.1s; }
+
+/* ---------- Ticker / Message / Award ---------- */
+#ticker {
+  position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.75); border: 1px solid #444; padding: 6px 14px;
+  font-size: 15px; color: #ffd76a; z-index: 8; white-space: nowrap;
+  text-shadow: 1px 1px 0 #000;
+}
+#message {
+  position: fixed; top: 22%; left: 50%; transform: translateX(-50%);
+  font-size: 20px; font-weight: bold; letter-spacing: 1px; text-align: center;
+  color: #fff; text-shadow: 2px 2px 0 #000; z-index: 8;
+}
+#award { position: fixed; top: 34%; left: 0; right: 0; text-align: center; z-index: 9; }
+#award-points {
+  font-size: 52px; font-weight: bold; letter-spacing: 3px;
+  color: #7dff9a; text-shadow: 3px 3px 0 #000, 0 0 18px rgba(125,255,154,0.5);
+}
+#award.bad #award-points { color: #ff7d7d; text-shadow: 3px 3px 0 #000, 0 0 18px rgba(255,125,125,0.5); }
+#award-quip { font-size: 18px; font-weight: bold; color: #fff; text-shadow: 2px 2px 0 #000; margin-top: 6px; }
+
+/* ---------- Ticket-Karte ---------- */
+#ticket-card {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -130%);
+  background: #f5f0dc; color: #1a1a1a; width: min(440px, 80vw);
+  border: 3px solid #000; box-shadow: 8px 8px 0 rgba(0,0,0,0.6); z-index: 9;
+  padding: 14px 18px;
+}
+#tc-code { font-size: 13px; font-weight: bold; color: #e6007e; letter-spacing: 1px; }
+#tc-title { font-size: 20px; font-weight: bold; margin: 4px 0 8px; }
+#tc-range { font-size: 15px; font-weight: bold; background: #1a1a1a; color: #ffd76a; display: inline-block; padding: 3px 10px; }
+
+/* ---------- Untere HUD-Leiste ---------- */
+#hud {
+  position: fixed; left: 0; right: 0; bottom: 0; height: 92px;
+  background: linear-gradient(#3a3d45, #24262c);
+  border-top: 3px solid #111; box-shadow: inset 0 2px 0 #4c505a;
+  display: flex; align-items: center; justify-content: center; gap: 28px;
+  z-index: 10; padding: 0 20px;
+}
+.hud-block { text-align: center; }
+.hud-label { font-size: 11px; letter-spacing: 2px; color: #9aa0ac; font-weight: bold; margin-bottom: 5px; }
+.hud-dim { color: #6a6f7a; }
+.hud-big { font-size: 26px; font-weight: bold; color: #ffd76a; text-shadow: 2px 2px 0 #000; margin-top: 3px; }
+#hp-bar, #velo-bar { position: relative; width: 190px; height: 16px; background: #14151a; border: 2px solid #000; }
+#hp-fill { height: 100%; width: 100%; background: linear-gradient(#7dff9a, #2e9e50); transition: width 0.15s; }
+#hp-fill.mid { background: linear-gradient(#ffd76a, #b98a20); }
+#hp-fill.low { background: linear-gradient(#ff7d7d, #a02020); }
+#face { width: 72px; height: 72px; image-rendering: pixelated; background: #14151a; border: 2px solid #000; }
+#ticket-mini { font-size: 15px; font-weight: bold; color: #fff; text-shadow: 1px 1px 0 #000; max-width: 240px; }
+#velo-band { position: absolute; top: 0; bottom: 0; left: 41.66%; width: 16.67%; background: rgba(125,255,154,0.22); border-left: 1px solid #7dff9a; border-right: 1px solid #7dff9a; z-index: 1; }
+#velo-fill { position: absolute; top: 0; bottom: 0; left: 0; width: 0%; background: linear-gradient(#6ab7ff, #2060a0); z-index: 0; transition: width 0.4s; }
+#velo-fill.good { background: linear-gradient(#7dff9a, #2e9e50); }
+#velo-fill.over { background: linear-gradient(#ff7d7d, #a02020); }
+
+/* ---------- Overlays ---------- */
+.overlay {
+  position: fixed; inset: 0; z-index: 30;
+  background: radial-gradient(ellipse at center, #1c1220 0%, #08060c 75%);
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  cursor: pointer;
+}
+.ov-inner { max-width: 760px; padding: 24px; }
+.ov-title {
+  font-size: 74px; font-weight: bold; letter-spacing: 6px;
+  color: #ffd76a; text-shadow: 4px 4px 0 #a02020, 8px 8px 0 #000;
+}
+.ov-title.small { font-size: 44px; }
+.ov-title .accent { color: #e6007e; }
+.accent { color: #e6007e; font-weight: bold; }
+.ov-sub { font-size: 18px; letter-spacing: 4px; color: #9aa0ac; margin: 8px 0 26px; text-transform: uppercase; }
+.ov-story { font-size: 16px; line-height: 1.75; color: #d8d8d8; margin-bottom: 26px; }
+.ov-controls { font-size: 13px; color: #8a8f9a; margin-bottom: 30px; letter-spacing: 1px; }
+.ov-cta { font-size: 20px; font-weight: bold; color: #fff; letter-spacing: 2px; }
+.blink { animation: blink 1.1s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0.15; } }
+
+#end-verdict { font-size: 20px; font-weight: bold; margin: 10px 0 22px; line-height: 1.6; }
+#end-verdict.win { color: #7dff9a; }
+#end-verdict.under { color: #ffd76a; }
+#end-verdict.over { color: #ff7d7d; }
+#end-stats { margin: 0 auto 18px; border-collapse: collapse; font-size: 15px; }
+#end-stats td, #end-stats th { padding: 5px 14px; border-bottom: 1px solid #333; text-align: left; }
+#end-stats td.num, #end-stats th.num { text-align: right; color: #ffd76a; font-weight: bold; }
+#end-stats td.lost { color: #ff7d7d; }
+#end-total { font-size: 26px; font-weight: bold; color: #fff; margin-bottom: 26px; }
+#restart-btn {
+  font-family: inherit; font-size: 18px; font-weight: bold; letter-spacing: 2px;
+  background: #e6007e; color: #fff; border: 3px solid #000; box-shadow: 4px 4px 0 #000;
+  padding: 12px 30px; cursor: pointer;
+}
+#restart-btn:hover { background: #ff2b96; }
+
+.hidden { display: none !important; }

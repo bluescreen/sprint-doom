@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPRINT DOOM — ein denkwerk Abenteuer</title>
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- Waffe -->
+  <div id="weapon-wrap"><canvas id="weapon" width="96" height="72"></canvas></div>
+
+  <!-- HUD -->
+  <div id="crosshair">+</div>
+  <div id="dmg-flash"></div>
+  <div id="scanlines"></div>
+
+  <div id="boss-wrap" class="hidden">
+    <div id="boss-title">DER KUNDE</div>
+    <div id="boss-bar"><div id="boss-fill"></div></div>
+  </div>
+
+  <div id="ticker" class="hidden"></div>
+  <div id="message" class="hidden"></div>
+
+  <div id="award" class="hidden">
+    <div id="award-points"></div>
+    <div id="award-quip"></div>
+  </div>
+
+  <div id="ticket-card" class="hidden">
+    <div id="tc-code"></div>
+    <div id="tc-title"></div>
+    <div id="tc-range"></div>
+  </div>
+
+  <div id="hud">
+    <div class="hud-block">
+      <div class="hud-label">NERVEN</div>
+      <div id="hp-bar"><div id="hp-fill"></div></div>
+      <div id="hp-num" class="hud-big">100</div>
+    </div>
+    <div class="hud-block" id="face-block">
+      <canvas id="face" width="32" height="32"></canvas>
+    </div>
+    <div class="hud-block" id="ticket-mini-block">
+      <div class="hud-label">TICKET</div>
+      <div id="ticket-mini">—</div>
+    </div>
+    <div class="hud-block" id="velo-block">
+      <div class="hud-label">SPRINT-VELOCITY <span class="hud-dim">(Ziel 25–35)</span></div>
+      <div id="velo-bar">
+        <div id="velo-band"></div>
+        <div id="velo-fill"></div>
+      </div>
+      <div id="velo-num" class="hud-big">0 SP</div>
+    </div>
+  </div>
+
+  <!-- Screens -->
+  <div id="title-overlay" class="overlay">
+    <div class="ov-inner">
+      <div class="ov-title">SPRINT<span class="accent">DOOM</span></div>
+      <div class="ov-sub">ein denkwerk Abenteuer</div>
+      <div class="ov-story">
+        Sprint 42. Fünf Tickets. Ein Kunde, der bei jedem einzelnen feilscht.<br>
+        Verhandle hart: Deine Kampf-Performance bestimmt die Story Points je Ticket.<br>
+        Punkte = Arbeitszeit = Kosten für den Kunden — er will wenig zahlen, du willst faire Punkte.<br>
+        <span class="accent">Ziel: Gesamt-Velocity zwischen 25 und 35 SP.</span><br>
+        Zu wenig → der Kunde kommt zu billig davon. Zu viel → dein Team kollabiert.
+      </div>
+      <div class="ov-controls">WASD — bewegen &nbsp;·&nbsp; MAUS — zielen &nbsp;·&nbsp; KLICK — Argumentator 9000 &nbsp;·&nbsp; ESC — Pause</div>
+      <div class="ov-cta blink">— KLICK ZUM STARTEN —</div>
+    </div>
+  </div>
+
+  <div id="pause-overlay" class="overlay hidden">
+    <div class="ov-inner">
+      <div class="ov-title small">PAUSE</div>
+      <div class="ov-sub">Daily Standup…</div>
+      <div class="ov-cta blink">— KLICK ZUM WEITERSPIELEN —</div>
+    </div>
+  </div>
+
+  <div id="end-overlay" class="overlay hidden">
+    <div class="ov-inner">
+      <div class="ov-title small" id="end-title">SPRINT REVIEW</div>
+      <div id="end-verdict"></div>
+      <table id="end-stats"></table>
+      <div id="end-total"></div>
+      <button id="restart-btn">NEUER SPRINT</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
