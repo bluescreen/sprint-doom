@@ -38,7 +38,8 @@ function rotY(v, a) {
 export class Boss {
   constructor(scene, level, variant = 'boss') {
     this.level = level;
-    this.tex = makeCustomerTextures(variant);
+    this.texCache = {};
+    this.tex = this.texFor(variant);
     this.mat = new THREE.MeshBasicMaterial({
       map: this.tex.idle, transparent: true, alphaTest: 0.15, side: THREE.DoubleSide,
     });
@@ -47,6 +48,18 @@ export class Boss {
     scene.add(this.mesh);
     this.pos = new THREE.Vector3();
     this.alive = false;
+  }
+
+  texFor(variant) {
+    return this.texCache[variant] || (this.texCache[variant] = makeCustomerTextures(variant));
+  }
+
+  // Swap the look per ticket (the finale sends the CEO in person, larger than life)
+  setVariant(variant) {
+    this.tex = this.texFor(variant);
+    const s = variant === 'bigboss' ? 1.18 : 1;
+    this.mesh.scale.set(s, s, 1);
+    this.mat.map = this.tex.idle;
   }
 
   spawn(cfg, p, dormant = false) {

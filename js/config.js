@@ -15,10 +15,15 @@ export const CONFIG = {
   },
 
   weapon: {
-    damage: 12,        // ±20 % Streuung
-    fireInterval: 0.26,
     range: 80,
   },
+  // Arsenal nach dem Original: Pistole, Shotgun, BFG — Umschalten mit 1-3.
+  // damage gilt pro Pellet (±20 % Streuung), spread = Streuwinkel (rad)
+  weapons: [
+    { name: 'FAKTEN-CHECK',       damage: 7,  fireInterval: 0.18, pellets: 1, spread: 0 },
+    { name: 'BULLET-POINT-SALVE', damage: 5,  fireInterval: 0.9,  pellets: 6, spread: 0.09 },
+    { name: 'ARGUMENTATOR 9000',  damage: 26, fireInterval: 0.55, pellets: 1, spread: 0 },
+  ],
 
   sprint: {
     min: 25,

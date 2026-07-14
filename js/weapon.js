@@ -12,14 +12,26 @@ export class Weapon {
     this.flash = 0;
     this.bobT = 0;
     this.wasFiring = false;
-    drawWeapon(this.ctx, false);
+    this.idx = 0; // Start wie im Original: mit der Pistole
+    this.switching = -1; // Ziel-Index während der Wechsel-Animation
+    this.switchT = 0;
+    drawWeapon(this.ctx, false, this.idx);
+  }
+
+  get def() { return CONFIG.weapons[this.idx]; }
+
+  switchTo(i) {
+    if (i === this.idx || !CONFIG.weapons[i] || this.switching >= 0) return false;
+    this.switching = i;
+    this.switchT = 0;
+    return true;
   }
 
   resetStats() { this.shots = 0; this.hits = 0; }
 
   get accuracy() { return this.shots ? this.hits / this.shots : 0; }
 
-  canFire(t) { return t - this.lastFire >= CONFIG.weapon.fireInterval; }
+  canFire(t) { return this.switching < 0 && t - this.lastFire >= this.def.fireInterval; }
 
   onFire(t) {
     this.lastFire = t;
@@ -33,10 +45,26 @@ export class Weapon {
     const firing = this.flash > 0;
     if (firing !== this.wasFiring) {
       this.wasFiring = firing;
-      drawWeapon(this.ctx, firing);
+      drawWeapon(this.ctx, firing, this.idx);
+    }
+    // Wechsel-Animation wie im Original: Waffe taucht ab, kommt neu wieder hoch
+    let switchY = 0;
+    if (this.switching >= 0) {
+      const HALF = 0.19; // s pro Richtung
+      this.switchT += dt;
+      if (this.switchT >= HALF && this.idx !== this.switching) {
+        this.idx = this.switching;
+        drawWeapon(this.ctx, false, this.idx);
+      }
+      if (this.switchT >= 2 * HALF) {
+        this.switching = -1;
+      } else {
+        const p = this.switchT < HALF ? this.switchT / HALF : 2 - this.switchT / HALF;
+        switchY = p * 210;
+      }
     }
     const bobX = Math.sin(this.bobT) * (moving ? 10 : 3);
     const bobY = Math.abs(Math.cos(this.bobT)) * (moving ? 7 : 2) + (firing ? 10 : 0);
-    this.canvas.style.transform = `translate(${bobX}px, ${bobY}px)`;
+    this.canvas.style.transform = `translate(${bobX}px, ${bobY + switchY}px)`;
   }
 }

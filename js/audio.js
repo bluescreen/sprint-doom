@@ -438,9 +438,21 @@ function ensureMusicGain() {
 }
 
 export const sfx = {
-  shoot() {
-    noise({ dur: 0.08, vol: 0.22, freq: 1600 });
-    tone({ f0: 320, f1: 60, dur: 0.12, type: 'square', vol: 0.15 });
+  shoot(idx = 2) {
+    if (idx === 0) { // Fakten-Check: trockener, präziser Knall
+      noise({ dur: 0.05, vol: 0.14, freq: 2400 });
+      tone({ f0: 540, f1: 120, dur: 0.08, type: 'square', vol: 0.13 });
+    } else if (idx === 1) { // Bullet-Point-Salve: breiter Wumms
+      noise({ dur: 0.16, vol: 0.3, freq: 900 });
+      tone({ f0: 210, f1: 45, dur: 0.2, type: 'square', vol: 0.18 });
+    } else { // Argumentator 9000
+      noise({ dur: 0.08, vol: 0.22, freq: 1600 });
+      tone({ f0: 320, f1: 60, dur: 0.12, type: 'square', vol: 0.15 });
+    }
+  },
+  weaponSwitch() {
+    tone({ f0: 220, f1: 330, dur: 0.06, type: 'square', vol: 0.1 });
+    noise({ dur: 0.04, vol: 0.08, freq: 1200, delay: 0.05 });
   },
   hitEnemy() {
     tone({ f0: 720, f1: 380, dur: 0.07, type: 'square', vol: 0.14 });

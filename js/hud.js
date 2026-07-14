@@ -102,7 +102,7 @@ export class Hud {
 
   // ---------- Boss ----------
   bossShow(cfg) {
-    $('boss-title').textContent = `DER KUNDE — verhandelt ${cfg.code}`;
+    $('boss-title').textContent = `${cfg.bossName || 'DER KUNDE'} — verhandelt ${cfg.code}`;
     $('boss-fill').style.width = '100%';
     $('boss-wrap').classList.remove('hidden');
   }

@@ -74,6 +74,14 @@ window.addEventListener('keydown', (e) => {
     const n = +e.key;
     if (n >= 1 && n <= CONFIG.difficulties.length) startGame(n - 1);
   }
+  // Waffenwechsel mit 1-3 im Spiel
+  if (state === 'playing') {
+    const w = { Digit1: 0, Digit2: 1, Digit3: 2 }[e.code];
+    if (w !== undefined && weapon.switchTo(w)) {
+      sfx.weaponSwitch();
+      hud.message(CONFIG.weapons[w].name, 1.1);
+    }
+  }
 });
 window.addEventListener('keyup', (e) => keys.delete(e.code));
 window.addEventListener('mousemove', (e) => {
@@ -147,33 +155,52 @@ function raySphereT(origin, dir, center, r) {
 }
 
 const _dir = new THREE.Vector3();
+const _pdir = new THREE.Vector3();
+const _up = new THREE.Vector3(0, 1, 0);
 const _center = new THREE.Vector3();
 
-function fire() {
-  weapon.onFire(time);
-  sfx.shoot();
-  camera.getWorldDirection(_dir);
-  const h = Math.hypot(_dir.x, _dir.z);
+// Ein Strahl (Pellet): nächstes Ziel unter Kunde + Beratern, vor der Wand
+function pelletTarget(dir) {
+  const h = Math.hypot(dir.x, dir.z);
   let wallT = CONFIG.weapon.range;
   if (h > 1e-4) {
-    wallT = level.raycastWall(player.pos.x, player.pos.z, _dir.x / h, _dir.z / h, CONFIG.weapon.range) / h;
+    wallT = level.raycastWall(player.pos.x, player.pos.z, dir.x / h, dir.z / h, CONFIG.weapon.range) / h;
   }
-  // Nearest hit among the customer and his consultants
   let hitT = Infinity, target = null;
   for (const e of [boss, ...adds.alive]) {
     if (!e.alive) continue;
     _center.set(e.pos.x, 1.9, e.pos.z);
     const r = e === boss ? CONFIG.boss.hitRadius : CONFIG.boss.hitRadius * 0.8;
-    const t = raySphereT(camera.position, _dir, _center, r);
+    const t = raySphereT(camera.position, dir, _center, r);
     if (t < hitT) { hitT = t; target = e; }
   }
-  if (target && hitT < wallT && hitT < CONFIG.weapon.range) {
-    weapon.hits++;
+  return target && hitT < wallT && hitT < CONFIG.weapon.range ? target : null;
+}
+
+function fire() {
+  const def = weapon.def;
+  weapon.onFire(time);
+  sfx.shoot(weapon.idx);
+  camera.getWorldDirection(_dir);
+  const dmg = new Map(); // Ziel → Summe der Pellet-Treffer
+  for (let i = 0; i < def.pellets; i++) {
+    _pdir.copy(_dir);
+    if (def.spread) {
+      _pdir.applyAxisAngle(_up, (Math.random() - 0.5) * 2 * def.spread);
+      _pdir.y += (Math.random() - 0.5) * def.spread;
+      _pdir.normalize();
+    }
+    const t = pelletTarget(_pdir);
+    if (t) dmg.set(t, (dmg.get(t) || 0) + def.damage * (0.8 + Math.random() * 0.4));
+  }
+  if (dmg.size) {
+    weapon.hits++; // Accuracy zählt Schüsse, nicht Pellets
     sfx.hitEnemy();
-    const justDied = target.takeDamage(CONFIG.weapon.damage * (0.8 + Math.random() * 0.4));
-    if (justDied) {
-      if (target === boss) sprint.onBossKilled(time);
-      else sfx.minionDie();
+    for (const [target, d] of dmg) {
+      if (target.takeDamage(d)) {
+        if (target === boss) sprint.onBossKilled(time);
+        else sfx.minionDie();
+      }
     }
   }
 }

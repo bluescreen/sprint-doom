@@ -15,7 +15,13 @@ const check = (cond, msg) => { if (!cond) errors.push(msg); };
 const D = CONFIG.difficulties;
 const P = CONFIG.player;
 const finale = CONFIG.tickets[CONFIG.tickets.length - 1];
-const playerDps = CONFIG.weapon.damage / CONFIG.weapon.fireInterval;
+// TTK bounds assume the player picks the strongest sustained weapon
+check(Array.isArray(CONFIG.weapons) && CONFIG.weapons.length > 0, 'weapons: arsenal missing or empty');
+(CONFIG.weapons || []).forEach((w) => {
+  check(w.damage > 0 && w.fireInterval > 0 && w.pellets >= 1, `weapon ${w.name}: invalid damage/fireInterval/pellets`);
+});
+const playerDps = Math.max(...(CONFIG.weapons || []).map(w => (w.damage * w.pellets) / w.fireInterval));
+check(Number.isFinite(playerDps) && playerDps > 0, 'weapons: player DPS not computable');
 const last = D.length - 1;
 
 // Pattern keys actually implemented in enemy.js (parsed, so they can't drift)

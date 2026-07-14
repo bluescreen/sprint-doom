@@ -76,7 +76,7 @@ body { font-family: "Courier New", ui-monospace, monospace; color: #e8e8e8; user
   border: 3px solid #000; box-shadow: 6px 6px 0 rgba(0,0,0,0.6); z-index: 9;
   padding: 12px 16px;
 }
-#tc-code { font-size: 13px; font-weight: bold; color: #e6007e; letter-spacing: 1px; }
+#tc-code { font-size: 13px; font-weight: bold; color: #ff42a1; letter-spacing: 1px; }
 #tc-title { font-size: 20px; font-weight: bold; margin: 4px 0 8px; }
 #tc-range { font-size: 15px; font-weight: bold; background: #1a1a1a; color: #ffd76a; display: inline-block; padding: 3px 10px; }
 
@@ -116,8 +116,8 @@ body { font-family: "Courier New", ui-monospace, monospace; color: #e8e8e8; user
   color: #ffd76a; text-shadow: 4px 4px 0 #a02020, 8px 8px 0 #000;
 }
 .ov-title.small { font-size: 44px; }
-.ov-title .accent { color: #e6007e; }
-.accent { color: #e6007e; font-weight: bold; }
+.ov-title .accent { color: #ff42a1; }
+.accent { color: #ff42a1; font-weight: bold; }
 .ov-sub { font-size: 18px; letter-spacing: 4px; color: #9aa0ac; margin: 8px 0 26px; text-transform: uppercase; }
 .ov-story { font-size: 16px; line-height: 1.75; color: #d8d8d8; margin-bottom: 26px; }
 .ov-controls { font-size: 13px; color: #8a8f9a; margin-bottom: 30px; letter-spacing: 1px; }
@@ -136,7 +136,7 @@ body { font-family: "Courier New", ui-monospace, monospace; color: #e8e8e8; user
 #end-total { font-size: 26px; font-weight: bold; color: #fff; margin-bottom: 26px; }
 #restart-btn {
   font-family: inherit; font-size: 18px; font-weight: bold; letter-spacing: 2px;
-  background: #e6007e; color: #fff; border: 3px solid #000; box-shadow: 4px 4px 0 #000;
+  background: #ff42a1; color: #fff; border: 3px solid #000; box-shadow: 4px 4px 0 #000;
   padding: 12px 30px; cursor: pointer;
 }
 #restart-btn:hover { background: #ff2b96; }
@@ -259,11 +259,11 @@ body { font-family: "Courier New", ui-monospace, monospace; color: #e8e8e8; user
   margin-top: 5vh; font-family: "Courier New", ui-monospace, monospace;
   font-size: 12px; font-weight: bold; letter-spacing: 1px; color: #FFE449;
 }
-.dw-badge { /* Hommage an das id-Software-Kästchen */
-  position: absolute; right: 26px; bottom: 24px; z-index: 1;
-  background: #FFE449; color: #000; border: 3px solid #000; box-shadow: 4px 4px 0 #000;
-  padding: 6px 12px 8px; font-weight: 700; font-size: 30px; line-height: 1;
+.dw-logo { /* die Wortmarke, wie auf den Deck-Covern oben links */
+  position: absolute; left: 32px; top: 28px; z-index: 1;
+  font-family: 'Studio Feixen Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 700; font-size: 30px; letter-spacing: 0.4px;
+  color: #F5F0EB; text-transform: lowercase;
 }
-.dw-badge span { display: block; font-size: 10px; letter-spacing: 2px; font-weight: 400; margin-top: 3px; }
 
 .hidden { display: none !important; }

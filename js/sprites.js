@@ -16,6 +16,15 @@ const MINION = {
   glasses: true,
 };
 
+// The end boss: the CEO in person — black pinstripe suit, sunglasses, gold tie.
+const BIGBOSS = {
+  ...C,
+  suit: '#14161c', suitLight: '#22242c', pants: '#101218',
+  tie: '#ffd76a', shirt: '#d8d8e2', hair: '#2a2a30', skin: '#d8a87e',
+  case: '#101014', caseDark: '#000',
+  sunglasses: true, pinstripe: true,
+};
+
 function makeCanvas(w, h) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
@@ -52,6 +61,9 @@ function drawCustomer(g, pose, C) {
   // Torso (Anzug)
   P(14, 20, 20, 24, C.suit);
   P(14, 20, 2, 24, C.suitLight); P(32, 20, 2, 24, C.suitLight);
+  if (C.pinstripe) {
+    for (const x of [18, 22, 26, 30]) P(x, 21, 1, 22, '#343846');
+  }
   // Hemd + Krawatte
   P(21, 20, 6, 12, C.shirt);
   P(23, 21, 2, 10, C.tie); P(22, 20, 4, 2, C.tie);
@@ -73,7 +85,11 @@ function drawCustomer(g, pose, C) {
   P(18, 6, 12, 12, C.skin);
   P(18, 13, 12, 1, C.skinShade);
   P(17, 4, 14, 3, C.hair); P(17, 6, 2, 5, C.hair); P(29, 6, 2, 5, C.hair);
-  if (C.glasses) {
+  if (C.sunglasses) {
+    // one black band, no eyes to read — pure menace
+    P(17, 9, 14, 4, '#0a0a0e');
+    P(19, 10, 3, 1, '#6a7482'); P(26, 10, 3, 1, '#6a7482'); // cold glint
+  } else if (C.glasses) {
     // consultant glasses instead of angry brows
     P(18, 9, 6, 4, '#1a1a1a'); P(24, 9, 6, 4, '#1a1a1a');   // frames
     P(19, 10, 4, 2, '#cfe2ea'); P(25, 10, 4, 2, '#cfe2ea'); // lenses
@@ -110,7 +126,7 @@ function drawCustomerDead(g, C) {
 }
 
 export function makeCustomerTextures(variant = 'boss') {
-  const pal = variant === 'minion' ? MINION : C;
+  const pal = variant === 'minion' ? MINION : variant === 'bigboss' ? BIGBOSS : C;
   const frames = {};
   for (const pose of ['idle', 'walk1', 'walk2', 'attack', 'hit']) {
     const c = makeCanvas(48, 64);
@@ -168,37 +184,71 @@ export function getExcuseMaterial(text) {
 }
 
 // ---------- Waffe: Argumentator 9000 (DOM-Canvas 96x72) ----------
-export function drawWeapon(g, firing) {
+export function drawWeapon(g, firing, idx = 0) {
   const P = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
   g.clearRect(0, 0, 96, 72);
   const oy = firing ? 5 : 0; // Rückstoß
 
-  // Mündungsflash
-  if (firing) {
-    P(40, 2, 12, 12, '#fff8d0');
-    P(36, 6, 20, 4, '#ffd76a');
-    P(44, 0, 4, 18, '#ffd76a');
-    P(30, 4, 4, 3, '#ff9a3c'); P(60, 4, 4, 3, '#ff9a3c');
+  if (idx === 0) {
+    // FAKTEN-CHECK: schmales Smartphone, ein präziser Fakt pro Schuss
+    if (firing) {
+      P(44, 4, 8, 8, '#fff8d0');
+      P(41, 7, 14, 3, '#ffd76a');
+      P(47, 1, 3, 12, '#ffd76a');
+    }
+    P(40, 16 + oy, 16, 32, '#22252c');
+    P(41, 17 + oy, 14, 1, '#4a505c');
+    P(42, 18 + oy, 12, 24, '#0a2a1a'); // Display
+    P(43, 20 + oy, 10, 2, '#39d97d'); // Faktenzeilen
+    P(43, 24 + oy, 7, 2, '#39d97d');
+    P(43, 28 + oy, 9, 2, '#39d97d');
+    P(44, 35 + oy, 2, 2, '#7dff9a'); P(46, 37 + oy, 2, 2, '#7dff9a'); P(48, 33 + oy, 4, 2, '#7dff9a'); // Häkchen
+    P(46, 44 + oy, 4, 2, '#666d7a');
+  } else if (idx === 1) {
+    // BULLET-POINT-SALVE: Dreifach-Megafon, breite Streuung
+    if (firing) {
+      P(28, 2, 10, 10, '#fff8d0'); P(43, 0, 10, 12, '#fff8d0'); P(58, 2, 10, 10, '#fff8d0');
+      P(24, 6, 48, 4, '#ffd76a');
+      P(30, 0, 3, 14, '#ff9a3c'); P(63, 0, 3, 14, '#ff9a3c');
+    }
+    for (const fx of [26, 42, 58]) {
+      P(fx, 12 + oy, 12, 5, '#31353e');
+      P(fx - 2, 17 + oy, 16, 5, '#454a54');
+      P(fx, 18 + oy, 12, 1, '#666d7a');
+    }
+    P(30, 24 + oy, 36, 20, '#575d68'); // breiter Korpus
+    P(30, 24 + oy, 36, 3, '#6a7180');
+    P(30, 41 + oy, 36, 3, '#3a3e46');
+    P(34, 30 + oy, 8, 6, '#7a1a1a'); P(35, 31 + oy, 6, 4, '#e04040');
+    g.fillStyle = '#ffd76a'; g.font = 'bold 8px monospace';
+    g.fillText('•••', 48, 38 + oy);
+  } else {
+    // ARGUMENTATOR 9000 (das Original)
+    if (firing) {
+      P(40, 2, 12, 12, '#fff8d0');
+      P(36, 6, 20, 4, '#ffd76a');
+      P(44, 0, 4, 18, '#ffd76a');
+      P(30, 4, 4, 3, '#ff9a3c'); P(60, 4, 4, 3, '#ff9a3c');
+    }
+    // Megafon-Trichter
+    P(34, 14 + oy, 24, 6, '#31353e');
+    P(30, 20 + oy, 32, 6, '#454a54');
+    P(32, 21 + oy, 28, 1, '#666d7a');
+    // Gerätekörper
+    P(34, 26 + oy, 28, 22, '#575d68');
+    P(34, 26 + oy, 28, 3, '#6a7180');
+    P(34, 45 + oy, 28, 3, '#3a3e46');
+    // Display
+    P(38, 31 + oy, 10, 7, '#0a2a1a');
+    P(39, 32 + oy, 8, 2, '#39d97d');
+    P(39, 35 + oy, 5, 2, '#39d97d');
+    // roter Knopf + Label
+    P(52, 31 + oy, 6, 6, '#7a1a1a'); P(53, 32 + oy, 4, 4, '#e04040');
+    g.fillStyle = '#ffd76a'; g.font = 'bold 7px monospace';
+    g.fillText('A9K', 40, 45 + oy);
+    // Antenne
+    P(60, 8 + oy, 2, 18, '#31353e'); P(59, 5 + oy, 4, 4, '#e6007e');
   }
-
-  // Megafon-Trichter
-  P(34, 14 + oy, 24, 6, '#31353e');
-  P(30, 20 + oy, 32, 6, '#454a54');
-  P(32, 21 + oy, 28, 1, '#666d7a');
-  // Gerätekörper
-  P(34, 26 + oy, 28, 22, '#575d68');
-  P(34, 26 + oy, 28, 3, '#6a7180');
-  P(34, 45 + oy, 28, 3, '#3a3e46');
-  // Display
-  P(38, 31 + oy, 10, 7, '#0a2a1a');
-  P(39, 32 + oy, 8, 2, '#39d97d');
-  P(39, 35 + oy, 5, 2, '#39d97d');
-  // roter Knopf + Label
-  P(52, 31 + oy, 6, 6, '#7a1a1a'); P(53, 32 + oy, 4, 4, '#e04040');
-  g.fillStyle = '#ffd76a'; g.font = 'bold 7px monospace';
-  g.fillText('A9K', 40, 45 + oy);
-  // Antenne
-  P(60, 8 + oy, 2, 18, '#31353e'); P(59, 5 + oy, 4, 4, '#e6007e');
 
   // Griff + Hand
   P(42, 48 + oy, 12, 14, '#2f333d');
