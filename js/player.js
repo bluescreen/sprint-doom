@@ -21,7 +21,7 @@ export class Player {
     this.pitch = Math.max(-1.35, Math.min(1.35, this.pitch));
   }
 
-  update(dt, keys) {
+  update(dt, keys, move = null) {
     // Sprung: nur vom Boden ab, volle Luftkontrolle (arcade)
     if (keys.has('Space') && this.grounded) {
       this.vy = CONFIG.player.jumpSpeed;
@@ -42,15 +42,16 @@ export class Player {
     if (keys.has('KeyS') || keys.has('ArrowDown')) fw -= 1;
     if (keys.has('KeyD') || keys.has('ArrowRight')) str += 1;
     if (keys.has('KeyA') || keys.has('ArrowLeft')) str -= 1;
-    this.moving = fw !== 0 || str !== 0;
+    if (move) { fw += move.y; str += move.x; } // analoger Touch-Stick
+    this.moving = Math.abs(fw) > 0.01 || Math.abs(str) > 0.01;
     if (!this.moving) return;
 
     const sin = Math.sin(this.yaw), cos = Math.cos(this.yaw);
     // forward = (-sin, -cos), right = (cos, -sin)
     let dx = -sin * fw + cos * str;
     let dz = -cos * fw - sin * str;
-    const len = Math.hypot(dx, dz) || 1;
-    const s = CONFIG.player.speed * dt / len;
+    // max(1, len): Tastatur wird normalisiert, halber Stick-Ausschlag bleibt langsam
+    const s = CONFIG.player.speed * dt / Math.max(1, Math.hypot(dx, dz));
     collideMove(this.level, this.pos, dx * s, dz * s, CONFIG.player.radius);
   }
 

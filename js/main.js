@@ -10,6 +10,7 @@ import { Pickups } from './pickups.js';
 import { SprintManager } from './tickets.js';
 import { Hud } from './hud.js';
 import { initAudio, sfx, music } from './audio.js';
+import { TouchControls, isTouchDevice } from './touch.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -103,7 +104,7 @@ function startGame(skill) {
   music.start();
   $('skill-overlay').classList.add('hidden');
   state = 'playing';
-  canvas.requestPointerLock();
+  if (!touch) canvas.requestPointerLock();
   hud.message('SPRINT PLANNING: Das Board zeigt deine 5 Tickets. Termin 1: Konferenzraum 1 →', 5);
 }
 
@@ -131,8 +132,35 @@ tryTitleMusic();
 window.addEventListener('pointerdown', tryTitleMusic);
 window.addEventListener('keydown', tryTitleMusic);
 
+// ---------- Touch-Modus (mobil) ----------
+// Auf Coarse-Pointer-Geräten: Stick + Buttons statt Pointer Lock
+let touch = null;
+function setPausedTouch(v) {
+  paused = v;
+  mouseDown = false;
+  $('pause-overlay').classList.toggle('hidden', !v);
+}
+if (isTouchDevice()) {
+  touch = new TouchControls({
+    player, keys,
+    onFire: (v) => { mouseDown = v; },
+    onCycleWeapon: () => {
+      for (let i = 1; i <= CONFIG.weapons.length; i++) {
+        const w = (weapon.idx + i) % CONFIG.weapons.length;
+        if (weapon.owned[w] && weapon.switchTo(w)) {
+          sfx.weaponSwitch();
+          hud.message(CONFIG.weapons[w].name, 1.1);
+          break;
+        }
+      }
+    },
+    onPause: () => { if (state === 'playing') setPausedTouch(!paused); },
+  });
+}
+
 $('pause-overlay').addEventListener('click', () => {
-  canvas.requestPointerLock();
+  if (touch) setPausedTouch(false);
+  else canvas.requestPointerLock();
 });
 
 $('restart-btn').addEventListener('click', () => location.reload());
@@ -270,7 +298,7 @@ function fireSplash(def) {
 // ---------- Game-Loop ----------
 function update(dt) {
   time += dt;
-  player.update(dt, keys);
+  player.update(dt, keys, touch?.move);
   level.updateDoors(dt, player.pos);
   sprint.update(time);
 

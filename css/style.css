@@ -310,4 +310,45 @@ body { font-family: "Courier New", ui-monospace, monospace; color: #e8e8e8; user
   color: #F5F0EB; text-transform: lowercase;
 }
 
+/* ---------- Touch-Steuerung (nur auf Mobilgeräten erzeugt) ---------- */
+#tc-look {
+  position: fixed; top: 0; right: 0; width: 50vw; bottom: 92px;
+  z-index: 11; touch-action: none;
+}
+#tc-stick {
+  position: fixed; left: 18px; bottom: 112px; width: 120px; height: 120px;
+  border: 2px solid rgba(255,255,255,0.35); border-radius: 50%;
+  background: rgba(0,0,0,0.25); z-index: 12; touch-action: none;
+}
+#tc-knob {
+  position: absolute; left: 50%; top: 50%; width: 48px; height: 48px;
+  margin: -24px 0 0 -24px; border-radius: 50%;
+  background: rgba(255,228,73,0.75); border: 2px solid #000;
+  pointer-events: none;
+}
+.tc-btn {
+  position: fixed; z-index: 12; width: 64px; height: 64px; border-radius: 50%;
+  background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.4);
+  color: #fff; font-size: 26px; line-height: 60px; text-align: center;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+#tc-fire {
+  right: 24px; bottom: 128px; width: 84px; height: 84px; line-height: 80px;
+  font-size: 34px; background: rgba(230,0,126,0.5);
+}
+#tc-jump { right: 124px; bottom: 112px; }
+#tc-weapon { right: 34px; bottom: 234px; }
+#tc-pause { top: 14px; right: 14px; width: 44px; height: 44px; line-height: 40px; font-size: 16px; }
+
+/* Kompaktere HUD-Leiste auf schmalen Screens */
+@media (max-width: 760px) {
+  #hud { gap: 12px; height: 78px; }
+  #hp-bar, #velo-bar { width: 120px; }
+  .hud-big { font-size: 19px; }
+  #face { width: 52px; height: 52px; }
+  #ticket-mini { max-width: 120px; font-size: 12px; }
+  #weapon { width: 240px; height: 180px; }
+  #weapon-wrap { bottom: 62px; margin-left: -50px; }
+}
+
 .hidden { display: none !important; }
