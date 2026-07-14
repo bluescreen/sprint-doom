@@ -378,6 +378,12 @@ function playTitleStep(s, t) {
 export const music = {
   startTitle() {
     if (!ctx || titleTimer || musicTimer) return;
+    if (ctx.state !== 'running') {
+      // Autoplay noch gesperrt: Chrome löst das resume()-Promise nach der
+      // ersten User-Geste ein — dann von vorn versuchen
+      ctx.resume().then(() => this.startTitle()).catch(() => {});
+      return;
+    }
     ensureMusicGain();
     titleStep = 0;
     titleNextT = ctx.currentTime + 0.1;
