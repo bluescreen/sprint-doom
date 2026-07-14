@@ -6,6 +6,7 @@ import { buildProps } from './props.js';
 import { Player } from './player.js';
 import { Weapon } from './weapon.js';
 import { Boss, Projectiles } from './enemy.js';
+import { Pickups } from './pickups.js';
 import { SprintManager } from './tickets.js';
 import { Hud } from './hud.js';
 import { initAudio, sfx, music } from './audio.js';
@@ -40,6 +41,7 @@ const player = new Player(level);
 const weapon = new Weapon();
 const boss = new Boss(scene, level);
 const projectiles = new Projectiles(scene);
+const pickups = new Pickups(scene);
 const hud = new Hud();
 
 let state = 'title'; // title | playing | ended
@@ -49,7 +51,7 @@ let mouseDown = false;
 const keys = new Set();
 
 const sprint = new SprintManager({
-  level, player, boss, projectiles, weapon, hud, sfx,
+  level, player, boss, projectiles, weapon, hud, sfx, pickups,
   onGameOver(results, total) {
     state = 'ended';
     music.stop();
@@ -185,6 +187,13 @@ function update(dt) {
     sfx.playerHurt();
     hud.setFaceTemp('hurt', 0.6);
     if (dead && sprint.phase === 'fight') sprint.onPlayerDown(time);
+  });
+
+  pickups.update(time, player, (item) => {
+    player.health = Math.min(CONFIG.player.maxHealth, player.health + item.heal);
+    hud.message(item.label, 2.2);
+    hud.setFaceTemp('grin', 1.2);
+    sfx.pickup();
   });
 
   if (mouseDown && weapon.canFire(time)) fire();

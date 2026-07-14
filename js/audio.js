@@ -467,6 +467,10 @@ export const sfx = {
         tone({ f0: f, f1: f - 40, dur: 0.18, type: 'triangle', vol: 0.15, delay: i * 0.16 }));
     }
   },
+  pickup() {
+    tone({ f0: 660, f1: 880, dur: 0.07, type: 'square', vol: 0.12 });
+    tone({ f0: 880, f1: 1320, dur: 0.09, type: 'square', vol: 0.12, delay: 0.06 });
+  },
   door() {
     noise({ dur: 0.35, vol: 0.12, freq: 300 });
     tone({ f0: 90, f1: 130, dur: 0.3, type: 'sawtooth', vol: 0.08 });

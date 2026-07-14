@@ -41,12 +41,14 @@ export const CONFIG = {
       patterns: { single: 1 } },
     { name: 'Hey, nicht vor dem ersten Kaffee.', hp: 0.8, dmg: 0.8, speed: 0.95, fire: 1.15, proj: 1, wind: 1.1, volley: 1, heal: 1.2,
       patterns: { single: 0.7, double: 0.3 } },
-    { name: 'Feilsch mich ordentlich runter.', hp: 1.1, dmg: 1.25, speed: 1.1, fire: 0.85, proj: 1.2, wind: 0.9, volley: 1, heal: 1,
-      patterns: { single: 0.4, double: 0.3, lead: 0.15, split: 0.1, bounce: 0.05 } },
-    { name: 'Ultra-Eskalation.', hp: 1.6, dmg: 2, speed: 1.35, fire: 0.6, proj: 1.5, wind: 0.7, volley: 2, heal: 0.75,
-      patterns: { single: 0.08, double: 0.2, mg: 0.15, lead: 0.12, ring: 0.1, split: 0.08, homing: 0.07, spiral: 0.08, pincer: 0.07, bounce: 0.05 } },
-    { name: 'ALBTRAUM: FESTPREIS!', hp: 2.4, dmg: 3.5, speed: 1.75, fire: 0.4, proj: 2, wind: 0.5, volley: 3, heal: 0.5,
-      patterns: { double: 0.12, mg: 0.14, lead: 0.1, ring: 0.08, wall: 0.12, split: 0.06, homing: 0.06, spiral: 0.1, pincer: 0.07, bounce: 0.05, rain: 0.06, cluster: 0.04 } },
+    { name: 'Feilsch mich ordentlich runter.', hp: 1.15, dmg: 1.4, speed: 1.15, fire: 0.8, proj: 1.25, wind: 0.85, volley: 1, heal: 0.9,
+      patterns: { single: 0.35, double: 0.3, lead: 0.15, split: 0.1, bounce: 0.05, mg: 0.05 } },
+    { name: 'Ultra-Eskalation.', hp: 1.9, dmg: 2.5, speed: 1.5, fire: 0.5, proj: 1.7, wind: 0.6, volley: 2, heal: 0.6,
+      patterns: { double: 0.18, mg: 0.18, lead: 0.14, ring: 0.1, wall: 0.08, split: 0.08, homing: 0.08, spiral: 0.07, pincer: 0.06, bounce: 0.05 } },
+    // Albtraum is meant to be borderline unwinnable: the customer outruns you,
+    // two hits end a ticket, and the pool is all killer patterns.
+    { name: 'ALBTRAUM: FESTPREIS!', hp: 3.2, dmg: 5, speed: 2, fire: 0.3, proj: 2.3, wind: 0.4, volley: 4, heal: 0.35,
+      patterns: { mg: 0.16, wall: 0.15, spiral: 0.12, lead: 0.12, rain: 0.1, double: 0.08, ring: 0.08, pincer: 0.08, cluster: 0.06, homing: 0.05 } },
   ],
 
   boss: {

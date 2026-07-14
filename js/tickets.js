@@ -5,7 +5,7 @@ import { music } from './audio.js';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 export class SprintManager {
-  constructor({ level, player, boss, projectiles, weapon, hud, sfx, onGameOver }) {
+  constructor({ level, player, boss, projectiles, weapon, hud, sfx, pickups, onGameOver }) {
     this.level = level;
     this.player = player;
     this.boss = boss;
@@ -13,6 +13,7 @@ export class SprintManager {
     this.weapon = weapon;
     this.hud = hud;
     this.sfx = sfx;
+    this.pickups = pickups;
     this.onGameOver = onGameOver;
     this.current = 0;
     this.phase = 'roam'; // roam | fight
@@ -107,10 +108,12 @@ export class SprintManager {
     if (this.current === 5) {
       this.finished = true;
       setTimeout(() => this.onGameOver(this.results, this.total), 2800);
-    } else if (!res.lost) {
-      this.hud.message('Weiter zum nächsten Ticket →', 2.4, 2.6);
     } else {
-      this.hud.message('Ticket verloren… weiter zum nächsten →', 2.6, 2.6);
+      this.pickups.spawnWave(2);
+      this.hud.message(res.lost
+        ? 'Ticket verloren… weiter zum nächsten →'
+        : 'Weiter zum nächsten Ticket →', 2.4, 2.6);
+      this.hud.message('Psst: Goodies in den Nebenräumen aufgetaucht!', 2.6, 5.2);
     }
   }
 }
