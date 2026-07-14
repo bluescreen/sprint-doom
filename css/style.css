@@ -259,6 +259,31 @@ body { font-family: "Courier New", ui-monospace, monospace; color: #e8e8e8; user
   margin-top: 5vh; font-family: "Courier New", ui-monospace, monospace;
   font-size: 12px; font-weight: bold; letter-spacing: 1px; color: #FFE449;
 }
+/* ---------- Title-Artwork (Gemini-Pixelart der Konfizone, textfrei) ---------- */
+#title-overlay, #skill-overlay, #pause-overlay, #end-overlay {
+  background: #0a0404 url('../assets/title-bg.png') center / cover no-repeat;
+  image-rendering: pixelated;
+}
+/* alle Screens im Title-Look: Text auf radialem Scrim */
+#title-overlay .ov-inner, #skill-overlay .ov-inner,
+#pause-overlay .ov-inner, #end-overlay .ov-inner {
+  background: radial-gradient(ellipse at 50% 45%, rgba(8, 4, 3, 0.78) 32%, rgba(8, 4, 3, 0.45) 60%, transparent 78%);
+  padding: 48px 64px;
+}
+/* Review-Tabelle & Verdikt auf dunklem Grund */
+.overlay.doom .ov-title.small { color: #F5F0EB; }
+.overlay.doom .ov-title .marker { color: #000; }
+.overlay.doom .ov-sub { color: #b8a89c; }
+.overlay.doom #end-verdict.win { color: #FFE449; }
+.overlay.doom #end-verdict.under { color: #F5F0EB; }
+.overlay.doom #end-verdict.over { color: #FF644E; }
+.overlay.doom #end-stats { margin: 0 auto 28px; }
+.overlay.doom #end-stats th { color: #b8a89c; border-bottom-color: #F5F0EB; }
+.overlay.doom #end-stats td { border-bottom-color: rgba(245, 240, 235, 0.25); }
+.overlay.doom #end-stats td.num, .overlay.doom #end-stats th.num { color: #FFE449; }
+.overlay.doom #end-total { background: #FFE449; color: #000; }
+.overlay.doom #restart-btn { margin: 0 auto; }
+
 .dw-logo { /* die Wortmarke, wie auf den Deck-Covern oben links */
   position: absolute; left: 32px; top: 28px; z-index: 1;
   font-family: 'Studio Feixen Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
