@@ -7,6 +7,15 @@ const C = {
   pants: '#1c1e26', mouth: '#5a2020', case: '#6b4a2f', caseDark: '#523823',
 };
 
+// The consultants (adds): light gray suit, blue tie, blond hair, glasses,
+// black briefcase — recognizable at a glance next to the dark-suited boss.
+const MINION = {
+  ...C,
+  suit: '#8a8f99', suitLight: '#9aa0ac', pants: '#767b85',
+  tie: '#2a4a8a', hair: '#c8b98a', case: '#1a1c22', caseDark: '#0c0d10',
+  glasses: true,
+};
+
 function makeCanvas(w, h) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
@@ -22,7 +31,7 @@ function toTex(canvas) {
 }
 
 // ---------- Der Kunde (48x64) ----------
-function drawCustomer(g, pose) {
+function drawCustomer(g, pose, C) {
   const P = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
   g.clearRect(0, 0, 48, 64);
   const attack = pose === 'attack';
@@ -64,10 +73,17 @@ function drawCustomer(g, pose) {
   P(18, 6, 12, 12, C.skin);
   P(18, 13, 12, 1, C.skinShade);
   P(17, 4, 14, 3, C.hair); P(17, 6, 2, 5, C.hair); P(29, 6, 2, 5, C.hair);
-  // wütende Brauen + Augen
-  P(19, 9, 4, 1, '#2a2a2a'); P(22, 10, 1, 1, '#2a2a2a');
-  P(25, 10, 1, 1, '#2a2a2a'); P(25, 9, 4, 1, '#2a2a2a');
-  P(20, 11, 2, 2, '#1a1a1a'); P(26, 11, 2, 2, '#1a1a1a');
+  if (C.glasses) {
+    // Beraterbrille statt wütender Brauen
+    P(18, 9, 6, 4, '#1a1a1a'); P(24, 9, 6, 4, '#1a1a1a');   // Fassung
+    P(19, 10, 4, 2, '#cfe2ea'); P(25, 10, 4, 2, '#cfe2ea'); // Gläser
+    P(20, 11, 2, 1, '#1a1a1a'); P(26, 11, 2, 1, '#1a1a1a'); // Pupillen
+  } else {
+    // wütende Brauen + Augen
+    P(19, 9, 4, 1, '#2a2a2a'); P(22, 10, 1, 1, '#2a2a2a');
+    P(25, 10, 1, 1, '#2a2a2a'); P(25, 9, 4, 1, '#2a2a2a');
+    P(20, 11, 2, 2, '#1a1a1a'); P(26, 11, 2, 2, '#1a1a1a');
+  }
   // Mund: zu / offen brüllend
   if (attack) { P(21, 14, 6, 3, C.mouth); P(22, 14, 4, 1, '#e8e8e8'); }
   else P(21, 15, 6, 1, C.mouth);
@@ -76,7 +92,7 @@ function drawCustomer(g, pose) {
   P(23, 24, 1, 1, '#ffd76a');
 }
 
-function drawCustomerDead(g) {
+function drawCustomerDead(g, C) {
   const P = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
   g.clearRect(0, 0, 48, 64);
   // liegender Kunde unten im Frame
@@ -93,12 +109,13 @@ function drawCustomerDead(g) {
   P(6, 40, 2, 2, '#ffd76a'); P(14, 36, 2, 2, '#ffd76a'); P(20, 42, 2, 2, '#ffd76a');
 }
 
-export function makeCustomerTextures() {
+export function makeCustomerTextures(variant = 'boss') {
+  const pal = variant === 'minion' ? MINION : C;
   const frames = {};
   for (const pose of ['idle', 'walk1', 'walk2', 'attack', 'hit']) {
     const c = makeCanvas(48, 64);
     const g = c.getContext('2d');
-    drawCustomer(g, pose === 'hit' ? 'idle' : pose);
+    drawCustomer(g, pose === 'hit' ? 'idle' : pose, pal);
     if (pose === 'hit') {
       g.globalCompositeOperation = 'source-atop';
       g.fillStyle = 'rgba(255,255,255,0.65)';
@@ -107,7 +124,7 @@ export function makeCustomerTextures() {
     frames[pose] = toTex(c);
   }
   const d = makeCanvas(48, 64);
-  drawCustomerDead(d.getContext('2d'));
+  drawCustomerDead(d.getContext('2d'), pal);
   frames.dead = toTex(d);
   return frames;
 }
