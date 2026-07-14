@@ -144,6 +144,12 @@ document.addEventListener('pointerlockchange', () => {
   }
 });
 
+// ---------- Screenshake & Hit-Stop ----------
+let shakeMag = 0;
+let hitStopT = 0;
+const addShake = (m) => { shakeMag = Math.min(0.5, Math.max(shakeMag, m)); };
+const addHitStop = (d) => { hitStopT = Math.max(hitStopT, d); };
+
 // ---------- Schießen ----------
 function raySphereT(origin, dir, center, r) {
   const oc = center.sub(origin); // center ist ein Wegwerf-Vektor
@@ -181,8 +187,10 @@ function fire() {
   const def = weapon.def;
   weapon.onFire(time);
   sfx.shoot(weapon.idx);
+  if (weapon.idx === 5) addShake(0.12); // der A9K tritt beim Abfeuern
   camera.getWorldDirection(_dir);
   if (def.splash) { fireSplash(def); return; }
+  const dmgMul = weapon.buffMul('dmg', time);
   const dmg = new Map(); // Ziel → Summe der Pellet-Treffer
   for (let i = 0; i < def.pellets; i++) {
     _pdir.copy(_dir);
@@ -192,15 +200,15 @@ function fire() {
       _pdir.normalize();
     }
     const t = pelletTarget(_pdir);
-    if (t) dmg.set(t, (dmg.get(t) || 0) + def.damage * (0.8 + Math.random() * 0.4));
+    if (t) dmg.set(t, (dmg.get(t) || 0) + def.damage * dmgMul * (0.8 + Math.random() * 0.4));
   }
   if (dmg.size) {
     weapon.hits++; // Accuracy zählt Schüsse, nicht Pellets
     sfx.hitEnemy();
     for (const [target, d] of dmg) {
       if (target.takeDamage(d)) {
-        if (target === boss) sprint.onBossKilled(time);
-        else sfx.minionDie();
+        if (target === boss) { sprint.onBossKilled(time); addShake(0.3); addHitStop(0.18); }
+        else { sfx.minionDie(); addShake(0.15); addHitStop(0.07); }
       }
     }
   }
@@ -227,16 +235,19 @@ function fireSplash(def) {
   if (hitT >= wallT) direct = null;
   _impact.copy(camera.position).addScaledVector(_dir, Math.min(hitT, wallT, CONFIG.weapon.range));
   sfx.explode();
+  addShake(0.35);
+  addHitStop(0.05);
+  const dmgMul = weapon.buffMul('dmg', time);
   let anyHit = false;
   for (const e of [boss, ...adds.alive]) {
     if (!e.alive) continue;
     const d = Math.hypot(e.pos.x - _impact.x, e.pos.z - _impact.z);
-    const dm = e === direct ? def.damage : d < def.splash ? def.damage * 0.6 * (1 - d / def.splash) : 0;
+    const dm = (e === direct ? def.damage : d < def.splash ? def.damage * 0.6 * (1 - d / def.splash) : 0) * dmgMul;
     if (dm <= 0) continue;
     anyHit = true;
     if (e.takeDamage(dm * (0.8 + Math.random() * 0.4))) {
-      if (e === boss) sprint.onBossKilled(time);
-      else sfx.minionDie();
+      if (e === boss) { sprint.onBossKilled(time); addShake(0.3); addHitStop(0.18); }
+      else { sfx.minionDie(); addShake(0.15); addHitStop(0.07); }
     }
   }
   if (anyHit) { weapon.hits++; sfx.hitEnemy(); }
@@ -268,11 +279,13 @@ function update(dt) {
     hud.flashDamage();
     sfx.playerHurt();
     hud.setFaceTemp('hurt', 0.6);
+    addShake(0.22);
     if (dead && sprint.phase === 'fight') sprint.onPlayerDown(time);
   });
 
   pickups.update(time, player, (item) => {
-    player.health = Math.min(CONFIG.player.maxHealth, player.health + item.heal);
+    if (item.heal) player.health = Math.min(CONFIG.player.maxHealth, player.health + item.heal);
+    if (item.buff) weapon.buff(item.buff.kind, item.buff.mul, time + item.buff.dur);
     hud.message(item.label, 2.2);
     hud.setFaceTemp('grin', 1.2);
     sfx.pickup();
@@ -286,14 +299,27 @@ function update(dt) {
   if (boss.alive) hud.bossHp(boss.hp / boss.maxHp);
 
   player.applyToCamera(camera);
+
+  // Screenshake obendrauf — klingt pro Frame aus
+  if (shakeMag > 0.004) {
+    camera.position.x += (Math.random() - 0.5) * shakeMag;
+    camera.position.y += (Math.random() - 0.5) * shakeMag;
+    camera.rotation.z += (Math.random() - 0.5) * shakeMag * 0.05;
+    shakeMag *= 0.88;
+  } else {
+    shakeMag = 0;
+  }
 }
 
 let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min((now - last) / 1000, 0.05);
+  let dt = Math.min((now - last) / 1000, 0.05);
   last = now;
-  if (state === 'playing' && !paused) update(dt);
+  if (state === 'playing' && !paused) {
+    if (hitStopT > 0) { hitStopT -= dt; dt *= 0.12; } // kurze Zeitlupe bei harten Treffern
+    update(dt);
+  }
   renderer.render(scene, camera);
 }
 player.applyToCamera(camera);

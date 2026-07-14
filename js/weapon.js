@@ -15,6 +15,7 @@ export class Weapon {
     this.idx = 0; // Start wie im Original: mit der Pistole
     this.switching = -1; // Ziel-Index während der Wechsel-Animation
     this.switchT = 0;
+    this.buffs = {}; // kind → { mul, until } aus Arena-Pickups
     drawWeapon(this.ctx, false, this.idx);
   }
 
@@ -31,7 +32,14 @@ export class Weapon {
 
   get accuracy() { return this.shots ? this.hits / this.shots : 0; }
 
-  canFire(t) { return this.switching < 0 && t - this.lastFire >= this.def.fireInterval; }
+  buff(kind, mul, until) { this.buffs[kind] = { mul, until }; }
+
+  buffMul(kind, t) {
+    const b = this.buffs[kind];
+    return b && t <= b.until ? b.mul : 1;
+  }
+
+  canFire(t) { return this.switching < 0 && t - this.lastFire >= this.def.fireInterval / this.buffMul('rate', t); }
 
   onFire(t) {
     this.lastFire = t;

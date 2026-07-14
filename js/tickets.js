@@ -50,7 +50,10 @@ export class SprintManager {
       volley: d.volley,
       patterns: d.patterns,
       parTime: base.parTime * d.hp * (finale ? bb.hp : 1),
-      rage: finale ? bb.rage : null,
+      // Jeder Kunde rastet unter 30 % HP aus; der CEO wie gehabt früher & härter
+      rage: finale
+        ? { ...bb.rage, taunt: 'JETZT REDE ICH!' }
+        : { at: 0.3, fire: 0.75, proj: 1.12, speed: 1.25, taunt: 'SO NICHT, FREUNDCHEN!' },
       bossName: finale ? 'DER CEO PERSÖNLICH' : 'DER KUNDE',
     };
     this.boss.setVariant(finale ? 'bigboss' : 'boss');
@@ -75,6 +78,7 @@ export class SprintManager {
     this.hud.showTicketCard(cfg);
     this.hud.bossShow(cfg);
     this.sfx.doorSlam();
+    this.pickups.spawnArena(room, this.level);
     music.setFight(true, cfg.id === 5); // Finale: Boss-Stufe der Kampfmusik
   }
 
@@ -103,6 +107,7 @@ export class SprintManager {
 
   finishTicket(res) {
     music.setFight(false);
+    this.pickups.clearArena();
     this.results.push(res);
     this.total += res.points;
     this.hud.hideBoss();

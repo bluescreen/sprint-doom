@@ -80,6 +80,7 @@ export class Boss {
     this.px = null; this.pz = null; this.pvx = 0; this.pvz = 0;
     this.mesh.visible = true;
     this.mat.map = this.tex.idle;
+    this.mat.color.set('#ffffff'); // Rage-Tönung vom letzten Ticket zurücksetzen
   }
 
   // The meeting starts: a waiting enemy becomes hostile
@@ -138,8 +139,10 @@ export class Boss {
         ...this.cfg,
         fireInterval: this.cfg.fireInterval * this.cfg.rage.fire,
         projSpeed: this.cfg.projSpeed * this.cfg.rage.proj,
+        speed: this.cfg.speed * (this.cfg.rage.speed || 1),
       };
-      if (onExcuse) onExcuse('JETZT REDE ICH!');
+      this.mat.color.set('#ff9a8a'); // rot angelaufen
+      if (onExcuse) onExcuse(this.cfg.rage.taunt || 'JETZT REDE ICH!');
     }
 
     if (this.hitT > 0) { // kurzer Treffer-Stun

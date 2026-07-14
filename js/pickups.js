@@ -18,6 +18,9 @@ const ITEMS = [
   { key: 'coffee', heal: 20, weight: 0.45, label: '☕ Kaffee gefunden: +20 Nerven' },
   { key: 'mate', heal: 15, weight: 0.35, label: '🧃 Club-Mate gefunden: +15 Nerven' },
   { key: 'pizza', heal: 40, weight: 0.2, label: '🍕 Pizzastück gefunden: +40 Nerven' },
+  // Kampf-Buffs: erscheinen nur mitten in der Arena (weight 0 = nie in Nebenräumen)
+  { key: 'redbull', buff: { kind: 'rate', mul: 1.6, dur: 8 }, weight: 0, label: '⚡ Energy-Drink: Feuerrate ×1.6!' },
+  { key: 'folder', buff: { kind: 'dmg', mul: 1.5, dur: 8 }, weight: 0, label: '📁 Eskalations-Ordner: Schaden ×1.5!' },
 ];
 
 function pickItem() {
@@ -46,6 +49,17 @@ function materialFor(key) {
     g.fillStyle = '#3a2c10'; g.fillRect(13, 4, 6, 4);      // neck
     g.fillStyle = '#FFE449'; g.fillRect(12, 14, 8, 8);     // label
     g.fillStyle = '#000'; g.fillRect(14, 17, 4, 2);
+  } else if (key === 'redbull') {
+    g.fillStyle = '#b8c4d0'; g.fillRect(12, 6, 8, 22);     // schlanke Dose
+    g.fillStyle = '#2060a0'; g.fillRect(12, 12, 8, 10);    // Banderole
+    g.fillStyle = '#FFE449';                               // Blitz
+    g.fillRect(15, 13, 3, 4); g.fillRect(13, 17, 3, 4);
+    g.fillStyle = '#8a949e'; g.fillRect(13, 4, 6, 2);      // Deckel
+  } else if (key === 'folder') {
+    g.fillStyle = '#e0b840'; g.fillRect(6, 10, 20, 16);    // Ordner
+    g.fillStyle = '#c99a20'; g.fillRect(6, 10, 20, 3);
+    g.fillStyle = '#f4f0e8'; g.fillRect(10, 15, 12, 8);    // Etikett
+    g.fillStyle = '#c1272d'; g.fillRect(15, 16, 2, 4); g.fillRect(15, 21, 2, 1); // !
   } else { // pizza
     g.fillStyle = '#e8b84a';                               // slice
     g.beginPath(); g.moveTo(16, 28); g.lineTo(6, 8); g.lineTo(26, 8); g.closePath(); g.fill();
@@ -79,6 +93,32 @@ export class Pickups {
       sprite.position.set((spot.c + 0.5) * T, 1.1, (spot.r + 0.5) * T);
       this.scene.add(sprite);
       this.list.push({ sprite, item, spot, baseY: 1.1 });
+    }
+  }
+
+  // Buff-Drops mitten im Kampfraum: wer sie will, muss durchs Feuer
+  spawnArena(room, level, n = 2) {
+    const buffs = ITEMS.filter((it) => it.buff);
+    let tries = 24;
+    for (let i = 0; i < n && tries > 0; tries--) {
+      const x = (room.x0 + 1 + Math.random() * (room.x1 - room.x0 - 1) + 0.5) * T;
+      const z = (12 + Math.random() * 4 + 0.5) * T;
+      if (level.isSolidWorld(x, z)) continue;
+      const item = buffs[(Math.random() * buffs.length) | 0];
+      const sprite = new THREE.Sprite(materialFor(item.key));
+      sprite.scale.set(1.5, 1.5, 1);
+      sprite.position.set(x, 1.1, z);
+      this.scene.add(sprite);
+      this.list.push({ sprite, item, spot: null, baseY: 1.1, arena: true });
+      i++;
+    }
+  }
+
+  clearArena() { // Meeting vorbei — übrige Buffs verfallen
+    for (let i = this.list.length - 1; i >= 0; i--) {
+      if (!this.list[i].arena) continue;
+      this.scene.remove(this.list[i].sprite);
+      this.list.splice(i, 1);
     }
   }
 
