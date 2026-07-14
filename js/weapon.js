@@ -16,15 +16,24 @@ export class Weapon {
     this.switching = -1; // Ziel-Index während der Wechsel-Animation
     this.switchT = 0;
     this.buffs = {}; // kind → { mul, until } aus Arena-Pickups
+    this.owned = CONFIG.weapons.map((_, i) => i === 0); // nur die Pistole am Start
     drawWeapon(this.ctx, false, this.idx);
   }
 
   get def() { return CONFIG.weapons[this.idx]; }
 
   switchTo(i) {
-    if (i === this.idx || !CONFIG.weapons[i] || this.switching >= 0) return false;
+    if (i === this.idx || !CONFIG.weapons[i] || !this.owned[i] || this.switching >= 0) return false;
     this.switching = i;
     this.switchT = 0;
+    return true;
+  }
+
+  unlock(i) {
+    if (this.owned[i]) return false;
+    this.owned[i] = true;
+    this.switching = -1; // Doom-Klassiker: die neue Waffe sofort in die Hand
+    this.switchTo(i);
     return true;
   }
 

@@ -94,6 +94,7 @@ window.addEventListener('mouseup', (e) => { if (e.button === 0) mouseDown = fals
 function startGame(skill) {
   CONFIG.skill = skill;
   sprint.prepareRoom(); // first room crew appears behind the glass
+  pickups.spawnWeapons(level.rooms); // Waffen 2-6 liegen im Flur vor den Räumen
   initAudio();
   music.start();
   $('skill-overlay').classList.add('hidden');
@@ -286,6 +287,10 @@ function update(dt) {
   pickups.update(time, player, (item) => {
     if (item.heal) player.health = Math.min(CONFIG.player.maxHealth, player.health + item.heal);
     if (item.buff) weapon.buff(item.buff.kind, item.buff.mul, time + item.buff.dur);
+    if (item.weapon !== undefined) {
+      weapon.unlock(item.weapon);
+      sfx.weaponSwitch();
+    }
     hud.message(item.label, 2.2);
     hud.setFaceTemp('grin', 1.2);
     sfx.pickup();

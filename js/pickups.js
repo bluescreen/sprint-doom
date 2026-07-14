@@ -76,6 +76,26 @@ function materialFor(key) {
   return mat;
 }
 
+// Waffen-Pickup: leuchtendes Kästchen mit der Waffentaste
+function weaponMaterial(w) {
+  const key = 'weapon' + w;
+  if (matCache.has(key)) return matCache.get(key);
+  const c = document.createElement('canvas');
+  c.width = 32; c.height = 32;
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgba(255,228,73,0.28)'; g.fillRect(1, 1, 30, 30); // Glow
+  g.fillStyle = '#22252c'; g.fillRect(6, 6, 20, 20);
+  g.strokeStyle = '#FFE449'; g.lineWidth = 2; g.strokeRect(6, 6, 20, 20);
+  g.fillStyle = '#FFE449'; g.font = 'bold 15px monospace'; g.textAlign = 'center';
+  g.fillText(String(w + 1), 16, 22);
+  const tex = new THREE.CanvasTexture(c);
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+  matCache.set(key, mat);
+  return mat;
+}
+
 export class Pickups {
   constructor(scene) {
     this.scene = scene;
@@ -93,6 +113,22 @@ export class Pickups {
       sprite.position.set((spot.c + 0.5) * T, 1.1, (spot.r + 0.5) * T);
       this.scene.add(sprite);
       this.list.push({ sprite, item, spot, baseY: 1.1 });
+    }
+  }
+
+  // Doom-Progression: Waffe n+1 liegt im Flur vor Meetingraum n
+  spawnWeapons(rooms) {
+    for (let w = 1; w < CONFIG.weapons.length; w++) {
+      const room = rooms[w - 1];
+      const sprite = new THREE.Sprite(weaponMaterial(w));
+      sprite.scale.set(1.6, 1.6, 1);
+      sprite.position.set(room.bossSpawn.x, 1.1, 9.5 * T);
+      this.scene.add(sprite);
+      this.list.push({
+        sprite,
+        item: { key: 'weapon', weapon: w, label: `NEU: ${CONFIG.weapons[w].name} — Taste ${w + 1}` },
+        spot: null, baseY: 1.1,
+      });
     }
   }
 
