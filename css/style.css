@@ -162,6 +162,7 @@ body { font-family: "Courier New", ui-monospace, monospace; color: #e8e8e8; user
 .overlay.brand .ov-sub { color: #5E5E5E; margin: 3vh 0 5vh; }
 .overlay.brand .ov-story { color: #000; font-size: 17px; line-height: 1.8; margin: 4vh 0 3vh; }
 .overlay.brand .ov-controls { color: #5E5E5E; margin-bottom: 5vh; }
+
 .overlay.brand .ov-cta { color: #000; }
 
 .overlay.brand #end-verdict { font-weight: 400; max-width: 760px; margin: 3vh 0; }
@@ -185,5 +186,78 @@ body { font-family: "Courier New", ui-monospace, monospace; color: #e8e8e8; user
   font-weight: 400; letter-spacing: 1px; padding: 14px 34px; display: block;
 }
 .overlay.brand #restart-btn:hover { background: #BD95FF; color: #000; }
+
+/* ---------- DOOM-Edition Title Screen (Hölle in denkwerk-Farben) ---------- */
+.overlay.brand.doom {
+  background: radial-gradient(ellipse at 50% 30%, #2b1512 0%, #120807 60%, #0a0404 100%);
+  color: #F5F0EB;
+  text-align: center;
+}
+.overlay.doom::before { /* Höllenglut von unten */
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 130% 60% at 50% 112%, rgba(255,100,78,0.5) 0%, rgba(163,42,24,0.35) 45%, transparent 72%);
+  animation: hellflicker 2.6s ease-in-out infinite;
+}
+.overlay.doom::after { /* Scanlines wie im DOS-Original */
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0 1px, transparent 1px 3px);
+}
+@keyframes hellflicker { 0%, 100% { opacity: 0.7; } 35% { opacity: 1; } 60% { opacity: 0.8; } 80% { opacity: 0.95; } }
+.overlay.doom .ov-inner { position: relative; z-index: 1; }
+.overlay.doom .ov-topline { margin-bottom: 3vh; }
+.overlay.doom .ov-title {
+  display: flex; flex-direction: column; align-items: center;
+  line-height: 0.9; margin-bottom: 1vh;
+}
+.t-sprint {
+  font-size: clamp(20px, 2.6vw, 36px); letter-spacing: 0.55em; text-indent: 0.55em;
+  color: #F5F0EB; text-shadow: 0 0 14px rgba(255,100,78,0.6);
+}
+.t-doom {
+  font-weight: 700; font-size: clamp(96px, 16vw, 220px); letter-spacing: 0.02em;
+  background: linear-gradient(#FFE449 30%, #FF644E 68%, #7a1e12 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 5px 0 #000) drop-shadow(0 5px 0 #4a120a) drop-shadow(0 10px 24px rgba(255,100,78,0.4));
+}
+.overlay.doom .ov-story { color: #F5F0EB; margin: 2vh 0 3vh; }
+.overlay.doom .ov-controls { color: #b8a89c; }
+
+/* ---------- Skill-Screen (Doom "Choose Skill Level", denkwerk-Edition) ---------- */
+.skill-title { font-size: clamp(56px, 9vw, 120px); }
+.skill-head {
+  font-size: clamp(18px, 2vw, 26px); letter-spacing: 0.35em; text-indent: 0.35em;
+  color: #F5F0EB; text-shadow: 0 0 14px rgba(255,100,78,0.6);
+  margin: 4vh 0 4vh;
+}
+.skill-list { display: flex; flex-direction: column; align-items: center; gap: 2vh; }
+.skill-item {
+  font-family: inherit; background: none; border: none; cursor: pointer;
+  font-weight: 700; font-size: clamp(24px, 3.2vw, 42px); letter-spacing: 0.01em;
+  color: #F5F0EB; padding: 0.06em 0.4em;
+}
+.skill-item:hover, .skill-item:focus-visible {
+  background: #FFE449; color: #000; outline: none;
+  text-shadow: none;
+}
+.skill-item.nightmare {
+  color: #FF644E;
+  animation: hellflicker 1.4s ease-in-out infinite;
+  text-shadow: 0 0 18px rgba(255,100,78,0.8);
+}
+.skill-item.nightmare:hover, .skill-item.nightmare:focus-visible {
+  background: #FF644E; color: #F5F0EB; animation: none;
+}
+.overlay.doom .ov-diff-name.nightmare { color: #fff; }
+.overlay.doom .ov-cta { color: #FFE449; text-shadow: 0 0 12px rgba(255,228,73,0.5); }
+.ov-retail {
+  margin-top: 5vh; font-family: "Courier New", ui-monospace, monospace;
+  font-size: 12px; font-weight: bold; letter-spacing: 1px; color: #FFE449;
+}
+.dw-badge { /* Hommage an das id-Software-Kästchen */
+  position: absolute; right: 26px; bottom: 24px; z-index: 1;
+  background: #FFE449; color: #000; border: 3px solid #000; box-shadow: 4px 4px 0 #000;
+  padding: 6px 12px 8px; font-weight: 700; font-size: 30px; line-height: 1;
+}
+.dw-badge span { display: block; font-size: 10px; letter-spacing: 2px; font-weight: 400; margin-top: 3px; }
 
 .hidden { display: none !important; }

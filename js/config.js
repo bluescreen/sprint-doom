@@ -24,6 +24,17 @@ export const CONFIG = {
     maxPossible: 60,
   },
 
+  // Skill levels after the classic Doom selection screen, denkwerk edition.
+  // hp/dmg/speed scale the customer, fire his fire interval, proj his projectile speed.
+  skill: 2, // index into difficulties, set from the skill screen
+  difficulties: [
+    { name: 'Ich bin noch in der Probezeit.', hp: 0.6, dmg: 0.5, speed: 0.85, fire: 1.4, proj: 0.9 },
+    { name: 'Hey, nicht vor dem ersten Kaffee.', hp: 0.8, dmg: 0.75, speed: 0.92, fire: 1.2, proj: 0.95 },
+    { name: 'Feilsch mich ordentlich runter.', hp: 1, dmg: 1, speed: 1, fire: 1, proj: 1 },
+    { name: 'Ultra-Eskalation.', hp: 1.4, dmg: 1.5, speed: 1.2, fire: 0.75, proj: 1.2 },
+    { name: 'ALBTRAUM: FESTPREIS!', hp: 2.2, dmg: 3, speed: 1.5, fire: 0.45, proj: 1.5 },
+  ],
+
   boss: {
     radius: 0.9,     // Kollisionsradius Bewegung
     hitRadius: 1.4,  // Trefferradius für Hitscan

@@ -63,7 +63,14 @@ const sprint = new SprintManager({
 level.onDoorMove = (d) => { if (d.target === 1) sfx.door(); };
 
 // ---------- Input ----------
-window.addEventListener('keydown', (e) => keys.add(e.code));
+window.addEventListener('keydown', (e) => {
+  keys.add(e.code);
+  // Doom-Klassiker: Skill-Level per Taste 1–5 wählen
+  if (state === 'title' && !$('skill-overlay').classList.contains('hidden')) {
+    const n = +e.key;
+    if (n >= 1 && n <= CONFIG.difficulties.length) startGame(n - 1);
+  }
+});
 window.addEventListener('keyup', (e) => keys.delete(e.code));
 window.addEventListener('mousemove', (e) => {
   if (document.pointerLockElement) player.onMouseMove(e.movementX, e.movementY);
@@ -71,13 +78,28 @@ window.addEventListener('mousemove', (e) => {
 window.addEventListener('mousedown', (e) => { if (e.button === 0) mouseDown = true; });
 window.addEventListener('mouseup', (e) => { if (e.button === 0) mouseDown = false; });
 
-$('title-overlay').addEventListener('click', () => {
+// Skill-Screen nach dem klassischen Doom-Auswahlbildschirm
+function startGame(skill) {
+  CONFIG.skill = skill;
   initAudio();
   music.start();
-  $('title-overlay').classList.add('hidden');
+  $('skill-overlay').classList.add('hidden');
   state = 'playing';
   canvas.requestPointerLock();
   hud.message('SPRINT PLANNING: Das Board zeigt deine 5 Tickets. Termin 1: Konferenzraum 1 →', 5);
+}
+
+CONFIG.difficulties.forEach((d, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'skill-item' + (i === CONFIG.difficulties.length - 1 ? ' nightmare' : '');
+  btn.textContent = d.name;
+  btn.addEventListener('click', () => startGame(i));
+  $('skill-list').appendChild(btn);
+});
+
+$('title-overlay').addEventListener('click', () => {
+  $('title-overlay').classList.add('hidden');
+  $('skill-overlay').classList.remove('hidden');
 });
 
 $('pause-overlay').addEventListener('click', () => {

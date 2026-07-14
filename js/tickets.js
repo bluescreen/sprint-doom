@@ -29,7 +29,18 @@ export class SprintManager {
 
   startFight(time) {
     const room = this.level.rooms[this.current];
-    const cfg = CONFIG.tickets[this.current];
+    const base = CONFIG.tickets[this.current];
+    const d = CONFIG.difficulties[CONFIG.skill];
+    // parTime scales with hp so the time score stays reachable on higher skills
+    const cfg = this.cfg = {
+      ...base,
+      hp: Math.round(base.hp * d.hp),
+      speed: base.speed * d.speed,
+      fireInterval: base.fireInterval * d.fire,
+      projDamage: Math.round(base.projDamage * d.dmg),
+      projSpeed: base.projSpeed * d.proj,
+      parTime: base.parTime * d.hp,
+    };
     room.state = 'fight';
     this.phase = 'fight';
     this.level.doors[this.current].locked = true; // Tür fällt hinter dir zu
@@ -44,7 +55,7 @@ export class SprintManager {
   }
 
   onBossKilled(time) {
-    const cfg = CONFIG.tickets[this.current];
+    const cfg = this.cfg;
     const t = time - this.t0;
     const timeFactor = clamp(1 - (t - cfg.parTime) / (2 * cfg.parTime), 0, 1);
     const acc = this.weapon.accuracy;
@@ -56,7 +67,7 @@ export class SprintManager {
   }
 
   onPlayerDown(time) {
-    const cfg = CONFIG.tickets[this.current];
+    const cfg = this.cfg;
     this.boss.despawn();
     this.projectiles.clear();
     this.player.health = CONFIG.player.respawnHealth;
