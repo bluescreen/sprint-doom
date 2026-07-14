@@ -36,21 +36,24 @@ export class SprintManager {
     const room = this.level.rooms[this.current];
     const base = CONFIG.tickets[this.current];
     const d = CONFIG.difficulties[CONFIG.skill];
+    const finale = base.id === 5;
+    const bb = CONFIG.bigboss;
     // parTime scales with hp so the time score stays reachable on higher skills
     const cfg = this.cfg = {
       ...base,
-      hp: Math.round(base.hp * d.hp),
+      hp: Math.round(base.hp * d.hp * (finale ? bb.hp : 1)),
       speed: base.speed * d.speed,
       fireInterval: base.fireInterval * d.fire,
       windup: base.windup * d.wind,
-      projDamage: Math.round(base.projDamage * d.dmg),
+      projDamage: Math.round(base.projDamage * d.dmg * (finale ? bb.dmg : 1)),
       projSpeed: base.projSpeed * d.proj,
       volley: d.volley,
       patterns: d.patterns,
-      parTime: base.parTime * d.hp,
-      bossName: base.id === 5 ? 'DER CEO PERSÖNLICH' : 'DER KUNDE',
+      parTime: base.parTime * d.hp * (finale ? bb.hp : 1),
+      rage: finale ? bb.rage : null,
+      bossName: finale ? 'DER CEO PERSÖNLICH' : 'DER KUNDE',
     };
-    this.boss.setVariant(base.id === 5 ? 'bigboss' : 'boss');
+    this.boss.setVariant(finale ? 'bigboss' : 'boss');
     this.boss.spawn(cfg, room.bossSpawn, true);
     this.addCount = d.adds ? Math.min(4, d.adds + (base.id >= 4 ? 1 : 0)) : 0;
     this.adds.spawn(cfg, room, this.addCount, true);
@@ -72,7 +75,7 @@ export class SprintManager {
     this.hud.showTicketCard(cfg);
     this.hud.bossShow(cfg);
     this.sfx.doorSlam();
-    music.setFight(true);
+    music.setFight(true, cfg.id === 5); // Finale: Boss-Stufe der Kampfmusik
   }
 
   onBossKilled(time) {

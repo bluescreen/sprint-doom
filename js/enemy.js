@@ -75,6 +75,8 @@ export class Boss {
     this.hitT = 0;
     this.pattern = 'single';
     this.burst = null;
+    this.raged = false;
+    this.stuckT = 0; this.escapeT = 0; this.escapeDir = 1;
     this.px = null; this.pz = null; this.pvx = 0; this.pvz = 0;
     this.mesh.visible = true;
     this.mat.map = this.tex.idle;
@@ -129,6 +131,17 @@ export class Boss {
       return;
     }
 
+    // Finale: below the rage threshold the CEO snaps — faster fire, faster excuses
+    if (this.cfg.rage && !this.raged && this.hp <= this.maxHp * this.cfg.rage.at) {
+      this.raged = true;
+      this.cfg = {
+        ...this.cfg,
+        fireInterval: this.cfg.fireInterval * this.cfg.rage.fire,
+        projSpeed: this.cfg.projSpeed * this.cfg.rage.proj,
+      };
+      if (onExcuse) onExcuse('JETZT REDE ICH!');
+    }
+
     if (this.hitT > 0) { // kurzer Treffer-Stun
       this.hitT -= dt;
       this.mat.map = this.tex.hit;
@@ -180,12 +193,31 @@ export class Boss {
     // Verfolgen mit seitlichem Pendeln (Strafing)
     if (dist > CONFIG.boss.minDist) {
       const inv = 1 / dist;
-      const s = Math.sin(time * 2.1 + this.cfg.id * 1.7) * 0.8;
-      let mx = dx * inv - dz * inv * s;
-      let mz = dz * inv + dx * inv * s;
+      let mx, mz;
+      if (this.escapeT > 0) { // unstick: steer sideways around furniture
+        this.escapeT -= dt;
+        mx = -dz * inv * this.escapeDir;
+        mz = dx * inv * this.escapeDir;
+      } else {
+        const s = Math.sin(time * 2.1 + this.cfg.id * 1.7) * 0.8;
+        mx = dx * inv - dz * inv * s;
+        mz = dz * inv + dx * inv * s;
+      }
       const l = Math.hypot(mx, mz) || 1;
+      const ox = this.pos.x, oz = this.pos.z;
       collideMove(this.level, this.pos,
         (mx / l) * this.cfg.speed * dt, (mz / l) * this.cfg.speed * dt, CONFIG.boss.radius);
+      // Barely moving while trying to chase → wedged on furniture
+      if (Math.hypot(this.pos.x - ox, this.pos.z - oz) < this.cfg.speed * dt * 0.3) {
+        this.stuckT += dt;
+        if (this.stuckT > 0.6) {
+          this.stuckT = 0;
+          this.escapeT = 0.9;
+          this.escapeDir = Math.random() < 0.5 ? -1 : 1;
+        }
+      } else if (this.escapeT <= 0) {
+        this.stuckT = 0;
+      }
     }
 
     if (dist < CONFIG.boss.attackRange && this.cool <= 0) {
@@ -282,6 +314,7 @@ export class Adds {
       projSpeed: cfg.projSpeed * 0.9,
       volley: 1,
       patterns: { single: 0.7, double: 0.3 },
+      rage: null, // only the CEO snaps
     };
     for (const m of this.pool.slice(0, Math.min(count, this.pool.length))) {
       for (let tries = 0; tries < 12; tries++) {

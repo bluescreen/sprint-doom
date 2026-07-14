@@ -78,6 +78,7 @@ let musicTimer = null;
 let musicStep = 0;
 let musicNextT = 0;
 let fightMode = false;
+let bossMode = false; // Finale: noch eine Stufe drüber
 let noiseBuf = null;
 
 function getNoiseBuf() {
@@ -103,10 +104,10 @@ function getDistCurve(drive = 2.5) {
 function mBass(t, off, accent, dur = 0.12) {
   const f = E2 * Math.pow(2, off / 12);
   const shaper = ctx.createWaveShaper();
-  shaper.curve = getDistCurve(fightMode ? 4.5 : 2.5);
+  shaper.curve = getDistCurve(bossMode ? 6 : fightMode ? 4.5 : 2.5);
   const flt = ctx.createBiquadFilter();
   flt.type = 'lowpass';
-  flt.frequency.value = fightMode ? (accent ? 1100 : 640) : (accent ? 700 : 460);
+  flt.frequency.value = fightMode ? (accent ? (bossMode ? 1400 : 1100) : 640) : (accent ? 700 : 460);
   flt.Q.value = 1;
   const g = ctx.createGain();
   g.gain.setValueAtTime(0.001, t);
@@ -198,13 +199,13 @@ function mHat(t, vol = 0.06) {
   src.start(t); src.stop(t + 0.05);
 }
 
-function mLead(t, off, dur) {
+function mLead(t, off, dur, vol = 0.12) {
   const flt = ctx.createBiquadFilter();
   flt.type = 'lowpass'; flt.frequency.value = 2200;
   const g = ctx.createGain();
   g.gain.setValueAtTime(0.001, t);
-  g.gain.linearRampToValueAtTime(0.12, t + 0.02);
-  g.gain.setValueAtTime(0.12, t + dur * 0.6);
+  g.gain.linearRampToValueAtTime(vol, t + 0.02);
+  g.gain.setValueAtTime(vol, t + dur * 0.6);
   g.gain.exponentialRampToValueAtTime(0.001, t + dur);
   flt.connect(g); g.connect(musicGain);
   const lfo = ctx.createOscillator();
@@ -232,14 +233,19 @@ function playMusicStep(s, t) {
   // Melodic notes (off != 0) get the accent; the tied B♭ rings out the bar
   if (off !== null) mBass(t, off, off !== 0, r === HELD_STEP ? STEP_DUR * 5 : 0.12);
   if (fightMode) {
-    // Double-time assault: driving kicks with gallop pushes, backbeat on 2 & 4
-    if (s % 32 === 0) mCrash(t);
-    if (s % 8 === 0 || s % 16 === 6 || s % 16 === 14) mKick(t, 1.2);
-    if (s % 8 === 4) mSnare(t, 1.3);
+    // Double-time assault: driving kicks with gallop pushes, backbeat on 2 & 4.
+    // Boss-Stufe: Crash jeden Takt, Achtel-Kicks, Snare-Wirbel, Oktav-Schrei.
+    if (s % (bossMode ? 16 : 32) === 0) mCrash(t);
+    if (s % 8 === 0 || s % 16 === 6 || s % 16 === 14 || (bossMode && s % 8 === 2)) mKick(t, bossMode ? 1.3 : 1.2);
+    if (s % 8 === 4) mSnare(t, bossMode ? 1.45 : 1.3);
+    if (bossMode && s % 32 >= 29) mSnare(t, 0.7); // Wirbel in den nächsten Takt
     mHat(t, sub === 0 ? 0.06 : 0.03); // sixteenth hats
     if (sub % 2 === 0) {
       const n = LEAD_STEPS[(s >> 1) % 32];
-      if (n) mLead(t, n.off, STEP_DUR * 2 * n.dur * 0.95);
+      if (n) {
+        mLead(t, n.off, STEP_DUR * 2 * n.dur * 0.95);
+        if (bossMode) mLead(t, n.off + 12, STEP_DUR * 2 * n.dur * 0.95, 0.07);
+      }
     }
   } else {
     // Half-time drums: kick on 1 + and-of-2, snare on 3
@@ -375,6 +381,14 @@ function playTitleStep(s, t) {
   if (n) tLead(t, n.off, T_STEP * n.dur * 0.95);
 }
 
+// Auftakt fürs Finale: Tritonus-Fanfare (E gegen B♭) über Pauken-Schlag
+function bossSting() {
+  tone({ f0: E2, dur: 1.1, type: 'sawtooth', vol: 0.22 });
+  tone({ f0: E2 * Math.pow(2, 6 / 12), dur: 1.1, type: 'sawtooth', vol: 0.18, delay: 0.12 });
+  tone({ f0: 55, f1: 30, dur: 0.8, type: 'sine', vol: 0.4 });
+  noise({ dur: 0.5, vol: 0.2, freq: 4000 });
+}
+
 export const music = {
   startTitle() {
     if (!ctx || titleTimer || musicTimer) return;
@@ -416,16 +430,20 @@ export const music = {
     this.stopTitle();
     if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
     fightMode = false;
+    bossMode = false;
   },
-  setFight(v) {
+  setFight(v, boss = false) {
+    const wasBoss = bossMode;
     fightMode = v;
+    bossMode = v && boss;
     if (ctx && musicGain) {
-      // Push the whole mix up a notch during combat
+      // Push the whole mix up a notch during combat, two for the finale
       const t = ctx.currentTime;
       musicGain.gain.cancelScheduledValues(t);
       musicGain.gain.setValueAtTime(musicGain.gain.value, t);
-      musicGain.gain.linearRampToValueAtTime(v ? 0.62 : 0.5, t + 0.15);
+      musicGain.gain.linearRampToValueAtTime(v ? (bossMode ? 0.7 : 0.62) : 0.5, t + 0.15);
     }
+    if (bossMode && !wasBoss) bossSting();
   },
 };
 
@@ -438,17 +456,30 @@ function ensureMusicGain() {
 }
 
 export const sfx = {
-  shoot(idx = 2) {
+  shoot(idx = 5) {
     if (idx === 0) { // Fakten-Check: trockener, präziser Knall
       noise({ dur: 0.05, vol: 0.14, freq: 2400 });
       tone({ f0: 540, f1: 120, dur: 0.08, type: 'square', vol: 0.13 });
     } else if (idx === 1) { // Bullet-Point-Salve: breiter Wumms
       noise({ dur: 0.16, vol: 0.3, freq: 900 });
       tone({ f0: 210, f1: 45, dur: 0.2, type: 'square', vol: 0.18 });
+    } else if (idx === 2) { // CC-Mailverteiler: schnelles Ticken
+      noise({ dur: 0.03, vol: 0.12, freq: 3000 });
+      tone({ f0: 420, f1: 200, dur: 0.05, type: 'square', vol: 0.1 });
+    } else if (idx === 3) { // Change Request: Abschuss-Wumms (Explosion folgt beim Einschlag)
+      noise({ dur: 0.2, vol: 0.2, freq: 700 });
+      tone({ f0: 150, f1: 60, dur: 0.3, type: 'sawtooth', vol: 0.16 });
+    } else if (idx === 4) { // KPI-Laser: Zap
+      tone({ f0: 920, f1: 440, dur: 0.06, type: 'square', vol: 0.12 });
+      tone({ f0: 1400, f1: 900, dur: 0.04, type: 'triangle', vol: 0.07 });
     } else { // Argumentator 9000
       noise({ dur: 0.08, vol: 0.22, freq: 1600 });
       tone({ f0: 320, f1: 60, dur: 0.12, type: 'square', vol: 0.15 });
     }
+  },
+  explode() {
+    noise({ dur: 0.35, vol: 0.3, freq: 500 });
+    tone({ f0: 120, f1: 30, dur: 0.4, type: 'sawtooth', vol: 0.2 });
   },
   weaponSwitch() {
     tone({ f0: 220, f1: 330, dur: 0.06, type: 'square', vol: 0.1 });

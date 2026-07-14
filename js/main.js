@@ -74,10 +74,10 @@ window.addEventListener('keydown', (e) => {
     const n = +e.key;
     if (n >= 1 && n <= CONFIG.difficulties.length) startGame(n - 1);
   }
-  // Waffenwechsel mit 1-3 im Spiel
-  if (state === 'playing') {
-    const w = { Digit1: 0, Digit2: 1, Digit3: 2 }[e.code];
-    if (w !== undefined && weapon.switchTo(w)) {
+  // Waffenwechsel mit 1-6 im Spiel
+  if (state === 'playing' && /^Digit[1-9]$/.test(e.code)) {
+    const w = +e.code[5] - 1;
+    if (CONFIG.weapons[w] && weapon.switchTo(w)) {
       sfx.weaponSwitch();
       hud.message(CONFIG.weapons[w].name, 1.1);
     }
@@ -182,6 +182,7 @@ function fire() {
   weapon.onFire(time);
   sfx.shoot(weapon.idx);
   camera.getWorldDirection(_dir);
+  if (def.splash) { fireSplash(def); return; }
   const dmg = new Map(); // Ziel → Summe der Pellet-Treffer
   for (let i = 0; i < def.pellets; i++) {
     _pdir.copy(_dir);
@@ -202,6 +203,50 @@ function fire() {
         else sfx.minionDie();
       }
     }
+  }
+}
+
+const _impact = new THREE.Vector3();
+
+// Change Request: explodiert am nächsten Ziel oder an der Wand — Volltreffer
+// plus Flächenschaden mit Falloff, und wer zu nah dran steht, zahlt selbst
+function fireSplash(def) {
+  const h = Math.hypot(_dir.x, _dir.z);
+  let wallT = CONFIG.weapon.range;
+  if (h > 1e-4) {
+    wallT = level.raycastWall(player.pos.x, player.pos.z, _dir.x / h, _dir.z / h, CONFIG.weapon.range) / h;
+  }
+  let hitT = Infinity, direct = null;
+  for (const e of [boss, ...adds.alive]) {
+    if (!e.alive) continue;
+    _center.set(e.pos.x, 1.9, e.pos.z);
+    const r = e === boss ? CONFIG.boss.hitRadius : CONFIG.boss.hitRadius * 0.8;
+    const t = raySphereT(camera.position, _dir, _center, r);
+    if (t < hitT) { hitT = t; direct = e; }
+  }
+  if (hitT >= wallT) direct = null;
+  _impact.copy(camera.position).addScaledVector(_dir, Math.min(hitT, wallT, CONFIG.weapon.range));
+  sfx.explode();
+  let anyHit = false;
+  for (const e of [boss, ...adds.alive]) {
+    if (!e.alive) continue;
+    const d = Math.hypot(e.pos.x - _impact.x, e.pos.z - _impact.z);
+    const dm = e === direct ? def.damage : d < def.splash ? def.damage * 0.6 * (1 - d / def.splash) : 0;
+    if (dm <= 0) continue;
+    anyHit = true;
+    if (e.takeDamage(dm * (0.8 + Math.random() * 0.4))) {
+      if (e === boss) sprint.onBossKilled(time);
+      else sfx.minionDie();
+    }
+  }
+  if (anyHit) { weapon.hits++; sfx.hitEnemy(); }
+  const pd = Math.hypot(player.pos.x - _impact.x, player.pos.z - _impact.z);
+  if (pd < def.splash) {
+    const dead = player.damage(Math.round(12 * (1 - pd / def.splash)));
+    hud.flashDamage();
+    sfx.playerHurt();
+    hud.setFaceTemp('hurt', 0.6);
+    if (dead && sprint.phase === 'fight') sprint.onPlayerDown(time);
   }
 }
 

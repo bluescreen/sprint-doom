@@ -17,11 +17,16 @@ export const CONFIG = {
   weapon: {
     range: 80,
   },
-  // Arsenal nach dem Original: Pistole, Shotgun, BFG — Umschalten mit 1-3.
-  // damage gilt pro Pellet (±20 % Streuung), spread = Streuwinkel (rad)
+  // Arsenal in Original-Reihenfolge: Pistole, Shotgun, Chaingun, Rakete,
+  // Plasma, BFG — Umschalten mit 1-6.
+  // damage gilt pro Pellet (±20 % Streuung), spread = Streuwinkel (rad),
+  // splash = Explosionsradius (m) mit Falloff, inkl. Eigenschaden auf Nähe
   weapons: [
     { name: 'FAKTEN-CHECK',       damage: 7,  fireInterval: 0.18, pellets: 1, spread: 0 },
     { name: 'BULLET-POINT-SALVE', damage: 5,  fireInterval: 0.9,  pellets: 6, spread: 0.09 },
+    { name: 'CC-MAILVERTEILER',   damage: 4,  fireInterval: 0.1,  pellets: 1, spread: 0.03 },
+    { name: 'CHANGE REQUEST',     damage: 40, fireInterval: 1.25, pellets: 1, spread: 0, splash: 3.5 },
+    { name: 'KPI-LASER',          damage: 6,  fireInterval: 0.12, pellets: 1, spread: 0.01 },
     { name: 'ARGUMENTATOR 9000',  damage: 26, fireInterval: 0.55, pellets: 1, spread: 0 },
   ],
 
@@ -64,6 +69,14 @@ export const CONFIG = {
     attackRange: 20,
     minDist: 4.5,    // näher kommt der Kunde nicht
     volleySpread: 0.26, // angle (rad) between fan projectiles
+  },
+
+  // The finale CEO on top of the skill multipliers: more HP, harder hits,
+  // and below `rage.at` HP he snaps — faster fire, faster projectiles.
+  bigboss: {
+    hp: 1.25,
+    dmg: 1.15,
+    rage: { at: 0.5, fire: 0.65, proj: 1.25 },
   },
 
   // score = 0.4*Zeit + 0.35*Accuracy + 0.25*übrige Nerven → points = min + score*(max-min)

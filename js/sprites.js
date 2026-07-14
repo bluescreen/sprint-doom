@@ -222,6 +222,52 @@ export function drawWeapon(g, firing, idx = 0) {
     P(34, 30 + oy, 8, 6, '#7a1a1a'); P(35, 31 + oy, 6, 4, '#e04040');
     g.fillStyle = '#ffd76a'; g.font = 'bold 8px monospace';
     g.fillText('•••', 48, 38 + oy);
+  } else if (idx === 2) {
+    // CC-MAILVERTEILER: Umschlag-Minigun, Dauerfeuer an alle
+    if (firing) {
+      P(42, 2, 10, 8, '#fff8d0');
+      P(38, 5, 18, 3, '#ffd76a');
+    }
+    for (const bx of [36, 42, 48, 54]) { // Läufe
+      P(bx, 10 + oy, 4, 16, '#31353e');
+      P(bx + 1, 10 + oy, 1, 16, '#555b66');
+    }
+    P(32, 26 + oy, 32, 18, '#575d68');
+    P(32, 26 + oy, 32, 3, '#6a7180');
+    P(38, 31 + oy, 14, 9, '#f5f0eb'); // Umschlag
+    P(38, 31 + oy, 14, 2, '#d8d2c8');
+    P(44, 34 + oy, 2, 2, '#d8d2c8');
+    g.fillStyle = '#ffd76a'; g.font = 'bold 6px monospace';
+    g.fillText('CC', 55, 39 + oy);
+  } else if (idx === 3) {
+    // CHANGE REQUEST: Papprohr mit eingerolltem Vertrag, explodiert im Budget
+    if (firing) {
+      P(38, 0, 20, 14, '#fff8d0');
+      P(34, 4, 28, 5, '#ffd76a');
+      P(46, 0, 5, 18, '#ff9a3c');
+    }
+    P(38, 12 + oy, 20, 34, '#8a6f52');
+    P(38, 12 + oy, 20, 3, '#a98b68');
+    P(40, 16 + oy, 16, 6, '#f5f0eb'); // herausschauendes Papier
+    P(42, 18 + oy, 12, 1, '#888');
+    P(42, 20 + oy, 9, 1, '#888');
+    P(36, 44 + oy, 24, 4, '#3a3e46');
+    g.fillStyle = '#ffd76a'; g.font = 'bold 6px monospace';
+    g.fillText('CR!', 43, 42 + oy);
+  } else if (idx === 4) {
+    // KPI-LASER: Dashboard-Tablet mit Emitter, Daten als Dauerstrahl
+    if (firing) {
+      P(44, 2, 8, 10, '#d0f0ff');
+      P(40, 6, 16, 3, '#6ab7ff');
+    }
+    P(40, 10 + oy, 16, 8, '#454a54');
+    P(42, 12 + oy, 12, 4, '#6ab7ff'); // Emitter
+    P(36, 20 + oy, 24, 26, '#22252c');
+    P(38, 22 + oy, 20, 18, '#0a1a2a');
+    P(40, 34 + oy, 3, 4, '#6ab7ff'); // KPI-Balken
+    P(44, 30 + oy, 3, 8, '#39d97d');
+    P(48, 26 + oy, 3, 12, '#ffd76a');
+    P(52, 32 + oy, 3, 6, '#e04040');
   } else {
     // ARGUMENTATOR 9000 (das Original)
     if (firing) {

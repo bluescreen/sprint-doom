@@ -24,6 +24,12 @@ const playerDps = Math.max(...(CONFIG.weapons || []).map(w => (w.damage * w.pell
 check(Number.isFinite(playerDps) && playerDps > 0, 'weapons: player DPS not computable');
 const last = D.length - 1;
 
+// The finale CEO stacks on top of the skill multipliers (see CONFIG.bigboss)
+const bb = CONFIG.bigboss || { hp: 1, dmg: 1, rage: { at: 0.5, fire: 1, proj: 1 } };
+check(bb.hp >= 1 && bb.dmg >= 1, 'bigboss: hp/dmg multipliers must be >= 1');
+check(bb.rage && bb.rage.at > 0 && bb.rage.at < 1, 'bigboss: rage.at must be within (0,1)');
+check(bb.rage.fire > 0 && bb.rage.fire <= 1 && bb.rage.proj >= 1, 'bigboss: rage must speed up, not slow down');
+
 // Pattern keys actually implemented in enemy.js (parsed, so they can't drift)
 const enemySrc = readFileSync(join(root, 'js/enemy.js'), 'utf8');
 const block = enemySrc.slice(enemySrc.indexOf('const PATTERNS = {'), enemySrc.indexOf('\n};'));
@@ -47,8 +53,8 @@ D.forEach((d, i) => {
   }
   // Coffee break must always heal something noticeable
   check(P.coffeeHeal * d.heal >= 8, `${id}: coffee break heals ${(P.coffeeHeal * d.heal).toFixed(1)} (< 8)`);
-  // Never a one-shot from full health, not even on the last tier
-  check(finale.projDamage * d.dmg < P.maxHealth, `${id}: finale boss one-shots the player`);
+  // Never a one-shot from full health, not even on the last tier (CEO included)
+  check(finale.projDamage * d.dmg * bb.dmg < P.maxHealth, `${id}: finale CEO one-shots the player`);
 });
 
 // ---------- Ladder monotonicity ----------
@@ -67,12 +73,14 @@ for (let i = 1; i < D.length; i++) {
 // ---------- Winnable tiers (all but the last) ----------
 D.slice(0, last).forEach((d, i) => {
   const id = `tier ${i} (${d.name})`;
-  const ttk = (finale.hp * d.hp) / playerDps;
+  const ttk = (finale.hp * d.hp * bb.hp) / playerDps;
   check(ttk <= 14, `${id}: finale time-to-kill ${ttk.toFixed(1)}s > 14s`);
-  check(finale.projDamage * d.dmg < P.maxHealth / 2, `${id}: player dies in 2 hits — reserved for the last tier`);
+  check(finale.projDamage * d.dmg * bb.dmg < P.maxHealth / 2, `${id}: player dies in 2 CEO hits — reserved for the last tier`);
   check(finale.speed * d.speed < P.speed, `${id}: boss outruns the player — reserved for the last tier`);
   const cycle = finale.windup * d.wind + finale.fireInterval * d.fire;
   check(cycle >= 0.5, `${id}: finale shot cycle ${cycle.toFixed(2)}s < 0.5s`);
+  const ragedCycle = finale.windup * d.wind + finale.fireInterval * d.fire * bb.rage.fire;
+  check(ragedCycle >= 0.3, `${id}: raged CEO shot cycle ${ragedCycle.toFixed(2)}s < 0.3s`);
   check(finale.projSpeed * d.proj <= 24, `${id}: finale projectiles ${(finale.projSpeed * d.proj).toFixed(1)} u/s > 24 (undodgeable)`);
 });
 
@@ -86,10 +94,10 @@ D.slice(0, 2).forEach((d, i) => {
 // ---------- Last tier: brutal but not mathematically impossible ----------
 {
   const d = D[last], id = `tier ${last} (${d.name})`;
-  const ttk = (finale.hp * d.hp) / playerDps;
+  const ttk = (finale.hp * d.hp * bb.hp) / playerDps;
   check(ttk <= 25, `${id}: finale time-to-kill ${ttk.toFixed(1)}s > 25s (impossible, not 'almost')`);
-  const cycle = finale.windup * d.wind + finale.fireInterval * d.fire;
-  check(cycle >= 0.25, `${id}: finale shot cycle ${cycle.toFixed(2)}s < 0.25s (no reaction window)`);
+  const ragedCycle = finale.windup * d.wind + finale.fireInterval * d.fire * bb.rage.fire;
+  check(ragedCycle >= 0.2, `${id}: raged CEO shot cycle ${ragedCycle.toFixed(2)}s < 0.2s (no reaction window)`);
   check(Object.keys(d.patterns).length >= 8, `${id}: nightmare pool should stay varied (≥ 8 patterns)`);
 }
 
