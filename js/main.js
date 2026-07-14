@@ -100,10 +100,18 @@ CONFIG.difficulties.forEach((d, i) => {
 $('title-overlay').addEventListener('click', () => {
   $('title-overlay').classList.add('hidden');
   $('skill-overlay').classList.remove('hidden');
-  // Erster User-Gesture: ab hier darf WebAudio spielen
+});
+
+// Titelmusik direkt auf dem Titelbild: sofort starten, falls der Browser
+// Autoplay erlaubt — sonst bei der allerersten Geste (Taste/Klick) nachholen.
+function tryTitleMusic() {
+  if (state !== 'title') return;
   initAudio();
   music.startTitle();
-});
+}
+tryTitleMusic();
+window.addEventListener('pointerdown', tryTitleMusic);
+window.addEventListener('keydown', tryTitleMusic);
 
 $('pause-overlay').addEventListener('click', () => {
   canvas.requestPointerLock();
