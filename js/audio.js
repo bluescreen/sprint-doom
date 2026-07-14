@@ -52,7 +52,24 @@ const RIFF = [
   0, 0, 12, 0, 0, 10, 0, 0, 8, 0, 0, 6, null, null, null, null, // bar 2
 ];
 const HELD_STEP = 27; // the tied B♭ in bar 2
-const LEAD_SEQ = [0, 1, 0, -2, 3, 1, 0, -4, 6, 5, 3, 1, 0, 1, -2, 0]; // slow wail over E4
+// Battle lead, 4 bars of eighths in E phrygian: [semitones from E4, length in
+// eighths], null = rest. Stabby low phrases rise to a held high-E climax.
+const LEAD_PHRASE = [
+  [0, 1], [null, 1], [3, 1], [0, 1], [1, 1], [null, 1], [0, 1], [null, 1],   // bar 1: stabs
+  [5, 1], [3, 1], [1, 1], [3, 1], [1, 1], [0, 1], [-5, 2],                   // bar 2: coil down
+  [0, 1], [null, 1], [0, 1], [3, 1], [5, 1], [null, 1], [8, 1], [7, 1],      // bar 3: climb
+  [12, 3], [8, 1], [7, 1], [1, 1], [0, 2],                                   // bar 4: climax, fall
+];
+// Expand to a 32-slot eighth grid: {off, dur} on attacks, sparse elsewhere.
+const LEAD_STEPS = (() => {
+  const steps = [];
+  let i = 0;
+  for (const [off, len] of LEAD_PHRASE) {
+    if (off !== null) steps[i] = { off, dur: len };
+    i += len;
+  }
+  return steps;
+})();
 const E2 = 82.41, E4 = 329.63;
 const STEP_DUR = 60 / 114 / 4; // sixteenths at 114 BPM
 
@@ -220,7 +237,10 @@ function playMusicStep(s, t) {
     if (s % 8 === 0 || s % 16 === 6 || s % 16 === 14) mKick(t, 1.2);
     if (s % 8 === 4) mSnare(t, 1.3);
     mHat(t, sub === 0 ? 0.06 : 0.03); // sixteenth hats
-    if (sub === 0) mLead(t, LEAD_SEQ[(s >> 2) % 16], STEP_DUR * 3.6);
+    if (sub % 2 === 0) {
+      const n = LEAD_STEPS[(s >> 1) % 32];
+      if (n) mLead(t, n.off, STEP_DUR * 2 * n.dur * 0.95);
+    }
   } else {
     // Half-time drums: kick on 1 + and-of-2, snare on 3
     if (s % 16 === 0 || s % 16 === 6) mKick(t);

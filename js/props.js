@@ -635,8 +635,8 @@ export function buildProps(scene, level) {
   // ---------- Archiv FiBu: Ordnerregale ----------
   for (const x of [60, 64, 68]) add(makeShelf(shelfMats()), x, 4.6);
   for (let c = 14; c <= 17; c++) level.block(c, 1);
-  for (const x of [62, 66]) add(makeShelf(shelfMats()), x, 27.4, Math.PI);
-  level.block(15, 6); level.block(16, 6);
+  for (const x of [62, 70]) add(makeShelf(shelfMats()), x, 27.4, Math.PI);
+  level.block(15, 6); level.block(17, 6);
   add(makeCartonStack(), 74, 6.5); level.block(18, 1);
 
   // ---------- Officelager 1: Kartons + Regal ----------
