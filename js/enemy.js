@@ -197,10 +197,10 @@ export class Boss {
     if (dist > CONFIG.boss.minDist) {
       const inv = 1 / dist;
       let mx, mz;
-      if (this.escapeT > 0) { // unstick: steer sideways around furniture
+      if (this.escapeT > 0) { // unstick: seitlich UND leicht rückwärts aus der Ecke
         this.escapeT -= dt;
-        mx = -dz * inv * this.escapeDir;
-        mz = dx * inv * this.escapeDir;
+        mx = -dz * inv * this.escapeDir - dx * inv * 0.35;
+        mz = dx * inv * this.escapeDir - dz * inv * 0.35;
       } else {
         const s = Math.sin(time * 2.1 + this.cfg.id * 1.7) * 0.8;
         mx = dx * inv - dz * inv * s;
@@ -210,13 +210,15 @@ export class Boss {
       const ox = this.pos.x, oz = this.pos.z;
       collideMove(this.level, this.pos,
         (mx / l) * this.cfg.speed * dt, (mz / l) * this.cfg.speed * dt, CONFIG.boss.radius);
-      // Barely moving while trying to chase → wedged on furniture
+      // Barely moving while trying to chase → wedged on furniture.
+      // Blockiert die Ausweichrichtung ebenfalls, sofort die Seite wechseln
+      // statt 0.6s zu warten und dann eine Münze zu werfen.
       if (Math.hypot(this.pos.x - ox, this.pos.z - oz) < this.cfg.speed * dt * 0.3) {
         this.stuckT += dt;
-        if (this.stuckT > 0.6) {
+        if (this.stuckT > (this.escapeT > 0 ? 0.25 : 0.6)) {
           this.stuckT = 0;
+          this.escapeDir = this.escapeT > 0 ? -this.escapeDir : (Math.random() < 0.5 ? -1 : 1);
           this.escapeT = 0.9;
-          this.escapeDir = Math.random() < 0.5 ? -1 : 1;
         }
       } else if (this.escapeT <= 0) {
         this.stuckT = 0;
@@ -319,15 +321,29 @@ export class Adds {
       patterns: { single: 0.7, double: 0.3 },
       rage: null, // only the CEO snaps
     };
+    this.mcfg = mcfg;
+    this.room = room;
     for (const m of this.pool.slice(0, Math.min(count, this.pool.length))) {
-      for (let tries = 0; tries < 12; tries++) {
-        const c = room.x0 + 1 + ((Math.random() * (room.x1 - room.x0 - 1)) | 0);
-        const r = 12 + ((Math.random() * 6) | 0);
-        if (this.level.isSolidMove(c, r)) continue;
-        m.spawn(mcfg, { x: (c + 0.5) * T, z: (r + 0.5) * T }, dormant);
-        break;
-      }
+      this.placeOne(m, dormant);
     }
+  }
+
+  placeOne(m, dormant = false) {
+    const T = CONFIG.tileSize;
+    for (let tries = 0; tries < 12; tries++) {
+      const c = this.room.x0 + 1 + ((Math.random() * (this.room.x1 - this.room.x0 - 1)) | 0);
+      const r = 12 + ((Math.random() * 6) | 0);
+      if (this.level.isSolidMove(c, r)) continue;
+      m.spawn(this.mcfg, { x: (c + 0.5) * T, z: (r + 0.5) * T }, dormant);
+      return true;
+    }
+    return false;
+  }
+
+  // Nachschub: ein gefallener Berater kommt zurück (sofort wach)
+  respawnOne() {
+    const m = this.pool.find((m) => !m.alive);
+    return m && this.mcfg ? this.placeOne(m) : false;
   }
 
   wakeAll() {

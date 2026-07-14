@@ -26,6 +26,14 @@ export class SprintManager {
   }
 
   update(time) {
+    // Laufender Kampf: gefallene Berater rücken alle 12s einzeln nach
+    if (this.phase === 'fight' && this.addCount > 0 && time >= this.nextRespawnAt) {
+      this.nextRespawnAt = time + 12;
+      if (this.adds.alive.length < this.addCount && this.adds.respawnOne()) {
+        this.hud.ticker('Verstärkung aus dem Backoffice!');
+        this.sfx.excuse();
+      }
+    }
     if (this.finished || this.phase !== 'roam' || this.current >= 5 || !this.prepared) return;
     const room = this.level.rooms[this.current];
     if (room.inside(this.player.pos.x, this.player.pos.z)) this.startFight(time);
@@ -75,6 +83,7 @@ export class SprintManager {
     if (this.addCount) this.hud.ticker('Ich habe meine Berater mitgebracht!');
     this.weapon.resetStats();
     this.t0 = time;
+    this.nextRespawnAt = time + 12; // erste Nachrück-Welle frühestens nach 12s
     this.h0 = Math.max(1, this.player.health);
     this.hud.showTicketCard(cfg);
     this.hud.bossShow(cfg);
