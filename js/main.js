@@ -53,6 +53,10 @@ const keys = new Set();
 
 const sprint = new SprintManager({
   level, player, boss, adds, projectiles, weapon, hud, sfx, pickups,
+  onFightStart(cfg) {
+    introT = 1.6;
+    hud.bossIntro(cfg);
+  },
   onGameOver(results, total) {
     state = 'ended';
     music.stop();
@@ -148,6 +152,7 @@ document.addEventListener('pointerlockchange', () => {
 // ---------- Screenshake & Hit-Stop ----------
 let shakeMag = 0;
 let hitStopT = 0;
+let introT = 0; // Boss-Intro-Karte: kurzer Freeze
 const addShake = (m) => { shakeMag = Math.min(0.5, Math.max(shakeMag, m)); };
 const addHitStop = (d) => { hitStopT = Math.max(hitStopT, d); };
 
@@ -322,8 +327,12 @@ function frame(now) {
   let dt = Math.min((now - last) / 1000, 0.05);
   last = now;
   if (state === 'playing' && !paused) {
-    if (hitStopT > 0) { hitStopT -= dt; dt *= 0.12; } // kurze Zeitlupe bei harten Treffern
-    update(dt);
+    if (introT > 0) {
+      introT -= dt; // Boss-Intro: die Welt hält kurz den Atem an
+    } else {
+      if (hitStopT > 0) { hitStopT -= dt; dt *= 0.12; } // kurze Zeitlupe bei harten Treffern
+      update(dt);
+    }
   }
   renderer.render(scene, camera);
 }

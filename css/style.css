@@ -48,6 +48,25 @@ body { font-family: "Courier New", ui-monospace, monospace; color: #e8e8e8; user
 #boss-bar { height: 14px; background: #1a1016; border: 2px solid #000; box-shadow: 0 0 0 1px #5a2030; }
 #boss-fill { height: 100%; width: 100%; background: linear-gradient(#e05070, #a02040); transition: width 0.1s; }
 
+/* ---------- Boss-Intro (Kampfstart-Karte) ---------- */
+#boss-intro {
+  position: fixed; inset: 0; z-index: 25; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(rgba(0,0,0,0.85) 0 12%, transparent 12% 88%, rgba(0,0,0,0.85) 88%);
+  text-align: center;
+}
+#bi-ticket { font-size: 14px; letter-spacing: 4px; color: #ffd76a; text-shadow: 2px 2px 0 #000; }
+#bi-name {
+  font-size: 64px; font-weight: bold; letter-spacing: 4px; color: #FFE449;
+  text-shadow: 4px 4px 0 #a02020, 8px 8px 0 #000; margin: 8px 0 6px;
+}
+#bi-line { font-size: 18px; color: #e8e8e8; text-shadow: 2px 2px 0 #000; }
+#boss-intro.anim #bi-name { animation: bi-slam 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+#boss-intro.anim #bi-ticket { animation: bi-fade 0.5s both; }
+#boss-intro.anim #bi-line { animation: bi-fade 0.9s 0.35s both; }
+@keyframes bi-slam { from { transform: scale(2.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes bi-fade { from { opacity: 0; } to { opacity: 1; } }
+
 /* ---------- Ticker / Message / Award ---------- */
 #ticker {
   position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%);

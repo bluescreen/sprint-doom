@@ -82,7 +82,7 @@ export const CONFIG = {
   // score = 0.4*Zeit + 0.35*Accuracy + 0.25*übrige Nerven → points = min + score*(max-min)
   tickets: [
     {
-      id: 1, code: 'DW-101', title: 'Bugfix: Checkout-Button reagiert nicht',
+      id: 1, code: 'DW-101', bossName: 'HERR SPARFUCHS', bossLine: 'Hat noch nie eine Rechnung ohne Rabatt bezahlt.', title: 'Bugfix: Checkout-Button reagiert nicht',
       min: 2, max: 5, hp: 70, speed: 3.4, fireInterval: 1.5, windup: 0.4,
       projSpeed: 10, projDamage: 8, parTime: 14,
       excuses: [
@@ -93,7 +93,7 @@ export const CONFIG = {
       ],
     },
     {
-      id: 2, code: 'DW-102', title: 'Feature: Newsletter-Popup',
+      id: 2, code: 'DW-102', bossName: 'FRAU DRINGEND', bossLine: 'Die Deadline war gestern. Alles war gestern.', title: 'Feature: Newsletter-Popup',
       min: 3, max: 8, hp: 100, speed: 3.8, fireInterval: 1.25, windup: 0.38,
       projSpeed: 11, projDamage: 10, parTime: 20,
       excuses: [
@@ -104,7 +104,7 @@ export const CONFIG = {
       ],
     },
     {
-      id: 3, code: 'DW-103', title: 'Feature: Produktfilter im Shop',
+      id: 3, code: 'DW-103', bossName: 'DER NEFFE', bossLine: 'Macht das sonst am Wochenende. In 5 Minuten.', title: 'Feature: Produktfilter im Shop',
       min: 5, max: 13, hp: 140, speed: 4.2, fireInterval: 1.05, windup: 0.35,
       projSpeed: 12, projDamage: 11, parTime: 27,
       excuses: [
@@ -115,7 +115,7 @@ export const CONFIG = {
       ],
     },
     {
-      id: 4, code: 'DW-104', title: 'Feature: Login & Kundenkonto',
+      id: 4, code: 'DW-104', bossName: 'DR. SPÄTER', bossLine: 'DSGVO, Security, Tests: alles Q4-Themen.', title: 'Feature: Login & Kundenkonto',
       min: 8, max: 13, hp: 180, speed: 4.6, fireInterval: 0.9, windup: 0.32,
       projSpeed: 13, projDamage: 13, parTime: 34,
       excuses: [
@@ -126,7 +126,7 @@ export const CONFIG = {
       ],
     },
     {
-      id: 5, code: 'DW-105', title: 'FINALE: Shop-Relaunch Kickoff',
+      id: 5, code: 'DW-105', bossName: 'DER CEO PERSÖNLICH', bossLine: 'Baujahr Golfplatz. Kennt deinen Chef persönlich.', title: 'FINALE: Shop-Relaunch Kickoff',
       min: 8, max: 21, hp: 260, speed: 5.0, fireInterval: 0.72, windup: 0.3,
       projSpeed: 14, projDamage: 15, parTime: 44,
       excuses: [

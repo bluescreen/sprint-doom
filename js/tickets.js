@@ -5,7 +5,8 @@ import { music } from './audio.js';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 export class SprintManager {
-  constructor({ level, player, boss, adds, projectiles, weapon, hud, sfx, pickups, onGameOver }) {
+  constructor({ level, player, boss, adds, projectiles, weapon, hud, sfx, pickups, onGameOver, onFightStart }) {
+    this.onFightStart = onFightStart;
     this.level = level;
     this.player = player;
     this.boss = boss;
@@ -54,7 +55,7 @@ export class SprintManager {
       rage: finale
         ? { ...bb.rage, taunt: 'JETZT REDE ICH!' }
         : { at: 0.3, fire: 0.75, proj: 1.12, speed: 1.25, taunt: 'SO NICHT, FREUNDCHEN!' },
-      bossName: finale ? 'DER CEO PERSÖNLICH' : 'DER KUNDE',
+      bossName: base.bossName || (finale ? 'DER CEO PERSÖNLICH' : 'DER KUNDE'),
     };
     this.boss.setVariant(finale ? 'bigboss' : 'boss');
     this.boss.spawn(cfg, room.bossSpawn, true);
@@ -78,6 +79,7 @@ export class SprintManager {
     this.hud.showTicketCard(cfg);
     this.hud.bossShow(cfg);
     this.sfx.doorSlam();
+    this.onFightStart?.(cfg);
     this.pickups.spawnArena(room, this.level);
     music.setFight(true, cfg.id === 5); // Finale: Boss-Stufe der Kampfmusik
   }

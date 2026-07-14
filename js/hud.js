@@ -101,6 +101,17 @@ export class Hud {
   }
 
   // ---------- Boss ----------
+  bossIntro(cfg, dur = 1.6) {
+    $('bi-ticket').textContent = `${cfg.code} · VERHANDLUNG`;
+    $('bi-name').textContent = cfg.bossName || 'DER KUNDE';
+    $('bi-line').textContent = cfg.bossLine || '';
+    const el = $('boss-intro');
+    el.classList.remove('hidden', 'anim');
+    void el.offsetWidth; // Animation neu anstoßen
+    el.classList.add('anim');
+    setTimeout(() => el.classList.add('hidden'), dur * 1000);
+  }
+
   bossShow(cfg) {
     $('boss-title').textContent = `${cfg.bossName || 'DER KUNDE'} — verhandelt ${cfg.code}`;
     $('boss-fill').style.width = '100%';
