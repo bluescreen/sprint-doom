@@ -49,13 +49,14 @@ export class Boss {
     this.alive = false;
   }
 
-  spawn(cfg, p) {
+  spawn(cfg, p, dormant = false) {
     this.cfg = cfg;
     this.hp = cfg.hp;
     this.maxHp = cfg.hp;
     this.pos.set(p.x, 0, p.z);
     this.alive = true;
-    this.state = 'chase';
+    this.state = dormant ? 'wait' : 'chase';
+    this.waitPhase = Math.random() * Math.PI * 2;
     this.cool = 1.1;
     this.wind = 0;
     this.hitT = 0;
@@ -66,8 +67,16 @@ export class Boss {
     this.mat.map = this.tex.idle;
   }
 
+  // The meeting starts: a waiting enemy becomes hostile
+  wake() {
+    if (this.alive && this.state === 'wait') {
+      this.state = 'chase';
+      this.cool = 0.8;
+    }
+  }
+
   takeDamage(d) {
-    if (!this.alive) return false;
+    if (!this.alive || this.state === 'wait') return false; // no pot shots through the door
     this.hp -= d;
     this.hitT = 0.13;
     if (this.hp <= 0) {
@@ -99,6 +108,13 @@ export class Boss {
       this.pvz = this.pvz * 0.8 + ((player.pos.z - this.pz) / dt) * 0.2;
     }
     this.px = player.pos.x; this.pz = player.pos.z;
+
+    if (this.state === 'wait') { // paces behind the glass until the meeting starts
+      const sway = Math.sin(time * 0.9 + this.waitPhase);
+      collideMove(this.level, this.pos, sway * 1.1 * dt, 0, CONFIG.boss.radius);
+      this.mat.map = ((time * 2) | 0) % 2 ? this.tex.walk1 : this.tex.walk2;
+      return;
+    }
 
     if (this.hitT > 0) { // kurzer Treffer-Stun
       this.hitT -= dt;
@@ -241,7 +257,7 @@ export class Adds {
 
   get alive() { return this.pool.filter(m => m.alive); }
 
-  spawn(cfg, room, count) {
+  spawn(cfg, room, count, dormant = false) {
     const T = CONFIG.tileSize;
     const mcfg = {
       ...cfg,
@@ -259,10 +275,14 @@ export class Adds {
         const c = room.x0 + 1 + ((Math.random() * (room.x1 - room.x0 - 1)) | 0);
         const r = 12 + ((Math.random() * 6) | 0);
         if (this.level.isSolidMove(c, r)) continue;
-        m.spawn(mcfg, { x: (c + 0.5) * T, z: (r + 0.5) * T });
+        m.spawn(mcfg, { x: (c + 0.5) * T, z: (r + 0.5) * T }, dormant);
         break;
       }
     }
+  }
+
+  wakeAll() {
+    for (const m of this.pool) m.wake();
   }
 
   update(dt, player, time, projectiles) {

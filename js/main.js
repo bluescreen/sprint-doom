@@ -85,6 +85,7 @@ window.addEventListener('mouseup', (e) => { if (e.button === 0) mouseDown = fals
 // Skill screen after the classic Doom selection screen
 function startGame(skill) {
   CONFIG.skill = skill;
+  sprint.prepareRoom(); // first room crew appears behind the glass
   initAudio();
   music.start();
   $('skill-overlay').classList.add('hidden');

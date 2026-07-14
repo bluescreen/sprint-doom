@@ -21,15 +21,18 @@ export class SprintManager {
     this.results = [];
     this.total = 0;
     this.finished = false;
+    this.prepared = false; // room crew stands behind the glass, waiting
   }
 
   update(time) {
-    if (this.finished || this.phase !== 'roam' || this.current >= 5) return;
+    if (this.finished || this.phase !== 'roam' || this.current >= 5 || !this.prepared) return;
     const room = this.level.rooms[this.current];
     if (room.inside(this.player.pos.x, this.player.pos.z)) this.startFight(time);
   }
 
-  startFight(time) {
+  // Pre-spawn the customer and his consultants dormant, visible through the glass
+  prepareRoom() {
+    if (this.finished || this.current >= 5) return;
     const room = this.level.rooms[this.current];
     const base = CONFIG.tickets[this.current];
     const d = CONFIG.difficulties[CONFIG.skill];
@@ -46,13 +49,21 @@ export class SprintManager {
       patterns: d.patterns,
       parTime: base.parTime * d.hp,
     };
+    this.boss.spawn(cfg, room.bossSpawn, true);
+    this.addCount = d.adds ? Math.min(4, d.adds + (base.id >= 4 ? 1 : 0)) : 0;
+    this.adds.spawn(cfg, room, this.addCount, true);
+    this.prepared = true;
+  }
+
+  startFight(time) {
+    const room = this.level.rooms[this.current];
+    const cfg = this.cfg;
     room.state = 'fight';
     this.phase = 'fight';
     this.level.doors[this.current].locked = true; // Tür fällt hinter dir zu
-    this.boss.spawn(cfg, room.bossSpawn);
-    const addCount = d.adds ? Math.min(4, d.adds + (base.id >= 4 ? 1 : 0)) : 0;
-    this.adds.spawn(cfg, room, addCount);
-    if (addCount) this.hud.ticker('Ich habe meine Berater mitgebracht!');
+    this.boss.wake();
+    this.adds.wakeAll();
+    if (this.addCount) this.hud.ticker('Ich habe meine Berater mitgebracht!');
     this.weapon.resetStats();
     this.t0 = time;
     this.h0 = Math.max(1, this.player.health);
@@ -110,6 +121,10 @@ export class SprintManager {
     this.level.rooms[this.current].state = 'done';
     this.phase = 'roam';
     this.current++;
+    this.prepared = false;
+    // Small delay so the fallen customer stays on the floor for a moment
+    // before the same sprite pool mans the next room behind its glass.
+    if (this.current < 5) setTimeout(() => this.prepareRoom(), 1800);
 
     if (this.current === 5) {
       this.finished = true;

@@ -220,6 +220,11 @@ body { font-family: "Courier New", ui-monospace, monospace; color: #e8e8e8; user
   -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 5px 0 #000) drop-shadow(0 5px 0 #4a120a) drop-shadow(0 10px 24px rgba(255,100,78,0.4));
 }
+.t-oo { /* wie im Original-Logo: O kleiner, oben bündig — die Wortunterkante steigt zur Mitte */
+  font-size: 0.72em; vertical-align: 0.28em; /* hebt die O-Basislinie, bis die Versalhöhen bündig sind */
+  background: linear-gradient(#FFE449 30%, #FF644E 68%, #7a1e12 100%);
+  -webkit-background-clip: text; background-clip: text;
+}
 .overlay.doom .ov-story { color: #F5F0EB; margin: 2vh 0 3vh; }
 .overlay.doom .ov-controls { color: #b8a89c; }
 
