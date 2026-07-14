@@ -74,10 +74,10 @@ function drawCustomer(g, pose, C) {
   P(18, 13, 12, 1, C.skinShade);
   P(17, 4, 14, 3, C.hair); P(17, 6, 2, 5, C.hair); P(29, 6, 2, 5, C.hair);
   if (C.glasses) {
-    // Beraterbrille statt wütender Brauen
-    P(18, 9, 6, 4, '#1a1a1a'); P(24, 9, 6, 4, '#1a1a1a');   // Fassung
-    P(19, 10, 4, 2, '#cfe2ea'); P(25, 10, 4, 2, '#cfe2ea'); // Gläser
-    P(20, 11, 2, 1, '#1a1a1a'); P(26, 11, 2, 1, '#1a1a1a'); // Pupillen
+    // consultant glasses instead of angry brows
+    P(18, 9, 6, 4, '#1a1a1a'); P(24, 9, 6, 4, '#1a1a1a');   // frames
+    P(19, 10, 4, 2, '#cfe2ea'); P(25, 10, 4, 2, '#cfe2ea'); // lenses
+    P(20, 11, 2, 1, '#1a1a1a'); P(26, 11, 2, 1, '#1a1a1a'); // pupils
   } else {
     // wütende Brauen + Augen
     P(19, 9, 4, 1, '#2a2a2a'); P(22, 10, 1, 1, '#2a2a2a');

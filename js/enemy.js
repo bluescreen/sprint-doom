@@ -36,9 +36,9 @@ function rotY(v, a) {
 }
 
 export class Boss {
-  constructor(scene, level) {
+  constructor(scene, level, variant = 'boss') {
     this.level = level;
-    this.tex = makeCustomerTextures();
+    this.tex = makeCustomerTextures(variant);
     this.mat = new THREE.MeshBasicMaterial({
       map: this.tex.idle, transparent: true, alphaTest: 0.15, side: THREE.DoubleSide,
     });
@@ -233,9 +233,8 @@ export class Adds {
   constructor(scene, level) {
     this.level = level;
     this.pool = Array.from({ length: 4 }, () => {
-      const m = new Boss(scene, level);
+      const m = new Boss(scene, level, 'minion'); // own suit, tie, glasses
       m.mesh.scale.set(0.78, 0.78, 1);
-      m.mat.color.set(0xa8b8c8); // gray-blue tint sets them apart from the boss
       return m;
     });
   }
