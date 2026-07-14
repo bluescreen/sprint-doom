@@ -157,7 +157,7 @@ body { font-family: "Courier New", ui-monospace, monospace; color: #e8e8e8; user
   color: #000; text-shadow: none;
 }
 .overlay.brand .ov-title.small { font-size: clamp(44px, 6vw, 84px); }
-.marker { background: #FFE449; padding: 0 0.08em; }
+.marker { background: #FFE449; padding: 0 0.08em; position: relative; z-index: -1; }
 .overlay.brand .accent { background: #BD95FF; color: #000; padding: 0 0.2em; }
 .overlay.brand .ov-sub { color: #5E5E5E; margin: 3vh 0 5vh; }
 .overlay.brand .ov-story { color: #000; font-size: 17px; line-height: 1.8; margin: 4vh 0 3vh; }

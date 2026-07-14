@@ -72,24 +72,28 @@ function getNoiseBuf() {
   return noiseBuf;
 }
 
-let distCurve = null;
-function getDistCurve() {
-  if (!distCurve) {
-    distCurve = new Float32Array(256);
-    for (let i = 0; i < 256; i++) distCurve[i] = Math.tanh(2.5 * (i / 127.5 - 1));
+const distCurves = new Map();
+function getDistCurve(drive = 2.5) {
+  let c = distCurves.get(drive);
+  if (!c) {
+    c = new Float32Array(256);
+    for (let i = 0; i < 256; i++) c[i] = Math.tanh(drive * (i / 127.5 - 1));
+    distCurves.set(drive, c);
   }
-  return distCurve;
+  return c;
 }
 
 function mBass(t, off, accent, dur = 0.12) {
   const f = E2 * Math.pow(2, off / 12);
   const shaper = ctx.createWaveShaper();
-  shaper.curve = getDistCurve();
+  shaper.curve = getDistCurve(fightMode ? 4.5 : 2.5);
   const flt = ctx.createBiquadFilter();
-  flt.type = 'lowpass'; flt.frequency.value = accent ? 700 : 460; flt.Q.value = 1;
+  flt.type = 'lowpass';
+  flt.frequency.value = fightMode ? (accent ? 1100 : 640) : (accent ? 700 : 460);
+  flt.Q.value = 1;
   const g = ctx.createGain();
   g.gain.setValueAtTime(0.001, t);
-  g.gain.linearRampToValueAtTime(accent ? 0.24 : 0.18, t + 0.008);
+  g.gain.linearRampToValueAtTime((accent ? 0.24 : 0.18) * (fightMode ? 1.3 : 1), t + 0.008);
   g.gain.exponentialRampToValueAtTime(0.001, t + dur);
   shaper.connect(flt); flt.connect(g); g.connect(musicGain);
   // Power chord: detuned root pair + fifth
@@ -119,28 +123,50 @@ function mDrone(t, dur) {
   }
 }
 
-function mKick(t) {
+function mKick(t, punch = 1) {
   const o = ctx.createOscillator();
   const g = ctx.createGain();
   o.type = 'sine';
-  o.frequency.setValueAtTime(125, t);
+  o.frequency.setValueAtTime(125 + 35 * (punch - 1), t);
   o.frequency.exponentialRampToValueAtTime(42, t + 0.11);
-  g.gain.setValueAtTime(0.6, t);
+  g.gain.setValueAtTime(0.6 * punch, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
   o.connect(g); g.connect(musicGain);
   o.start(t); o.stop(t + 0.15);
+  if (punch > 1) {
+    // beater click so the kick cuts through the wall of bass
+    const src = ctx.createBufferSource();
+    src.buffer = getNoiseBuf();
+    const cg = ctx.createGain();
+    cg.gain.setValueAtTime(0.12, t);
+    cg.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+    src.connect(cg); cg.connect(musicGain);
+    src.start(t); src.stop(t + 0.03);
+  }
 }
 
-function mSnare(t) {
+function mSnare(t, mult = 1) {
   const src = ctx.createBufferSource();
   src.buffer = getNoiseBuf();
   const flt = ctx.createBiquadFilter();
-  flt.type = 'bandpass'; flt.frequency.value = 1900; flt.Q.value = 0.8;
+  flt.type = 'bandpass'; flt.frequency.value = 1900 + 400 * (mult - 1); flt.Q.value = 0.8;
   const g = ctx.createGain();
-  g.gain.setValueAtTime(0.3, t);
+  g.gain.setValueAtTime(0.3 * mult, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
   src.connect(flt); flt.connect(g); g.connect(musicGain);
   src.start(t); src.stop(t + 0.14);
+}
+
+function mCrash(t) {
+  const src = ctx.createBufferSource();
+  src.buffer = getNoiseBuf();
+  const flt = ctx.createBiquadFilter();
+  flt.type = 'highpass'; flt.frequency.value = 5000;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.16, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+  src.connect(flt); flt.connect(g); g.connect(musicGain);
+  src.start(t); src.stop(t + 0.65);
 }
 
 function mHat(t, vol = 0.06) {
@@ -156,23 +182,29 @@ function mHat(t, vol = 0.06) {
 }
 
 function mLead(t, off, dur) {
-  const o = ctx.createOscillator();
-  o.type = 'square';
-  o.frequency.value = E4 * Math.pow(2, off / 12);
-  const lfo = ctx.createOscillator();
-  lfo.frequency.value = 4.5;
-  const lfoG = ctx.createGain(); lfoG.gain.value = 20; // Vibrato in Cents
-  lfo.connect(lfoG); lfoG.connect(o.detune);
   const flt = ctx.createBiquadFilter();
-  flt.type = 'lowpass'; flt.frequency.value = 1800;
+  flt.type = 'lowpass'; flt.frequency.value = 2200;
   const g = ctx.createGain();
   g.gain.setValueAtTime(0.001, t);
-  g.gain.linearRampToValueAtTime(0.1, t + 0.02);
-  g.gain.setValueAtTime(0.1, t + dur * 0.6);
+  g.gain.linearRampToValueAtTime(0.12, t + 0.02);
+  g.gain.setValueAtTime(0.12, t + dur * 0.6);
   g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  o.connect(flt); flt.connect(g); g.connect(musicGain);
-  o.start(t); lfo.start(t);
-  o.stop(t + dur + 0.05); lfo.stop(t + dur + 0.05);
+  flt.connect(g); g.connect(musicGain);
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = 5.5;
+  const lfoG = ctx.createGain(); lfoG.gain.value = 25; // Vibrato in Cents
+  lfo.connect(lfoG);
+  // Square + detuned saw beat against each other for extra bite
+  for (const [type, det] of [['square', 0], ['sawtooth', -8]]) {
+    const o = ctx.createOscillator();
+    o.type = type;
+    o.frequency.value = E4 * Math.pow(2, off / 12);
+    o.detune.value = det;
+    lfoG.connect(o.detune);
+    o.connect(flt);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  lfo.start(t); lfo.stop(t + dur + 0.05);
 }
 
 function playMusicStep(s, t) {
@@ -182,14 +214,18 @@ function playMusicStep(s, t) {
   const off = RIFF[r];
   // Melodic notes (off != 0) get the accent; the tied B♭ rings out the bar
   if (off !== null) mBass(t, off, off !== 0, r === HELD_STEP ? STEP_DUR * 5 : 0.12);
-  // Half-time drums: kick on 1 + and-of-2, snare on 3
-  if (s % 16 === 0 || s % 16 === 6) mKick(t);
-  if (s % 16 === 8) mSnare(t);
-  if (sub % 2 === 0) mHat(t, sub === 0 ? 0.05 : 0.035);
   if (fightMode) {
-    if (s % 16 === 10) mKick(t); // extra kick push
-    if (sub % 2 === 1) mHat(t, 0.03); // sixteenth hats
+    // Double-time assault: driving kicks with gallop pushes, backbeat on 2 & 4
+    if (s % 32 === 0) mCrash(t);
+    if (s % 8 === 0 || s % 16 === 6 || s % 16 === 14) mKick(t, 1.2);
+    if (s % 8 === 4) mSnare(t, 1.3);
+    mHat(t, sub === 0 ? 0.06 : 0.03); // sixteenth hats
     if (sub === 0) mLead(t, LEAD_SEQ[(s >> 2) % 16], STEP_DUR * 3.6);
+  } else {
+    // Half-time drums: kick on 1 + and-of-2, snare on 3
+    if (s % 16 === 0 || s % 16 === 6) mKick(t);
+    if (s % 16 === 8) mSnare(t);
+    if (sub % 2 === 0) mHat(t, sub === 0 ? 0.05 : 0.035);
   }
 }
 
@@ -211,7 +247,16 @@ export const music = {
     if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
     fightMode = false;
   },
-  setFight(v) { fightMode = v; },
+  setFight(v) {
+    fightMode = v;
+    if (ctx && musicGain) {
+      // Push the whole mix up a notch during combat
+      const t = ctx.currentTime;
+      musicGain.gain.cancelScheduledValues(t);
+      musicGain.gain.setValueAtTime(musicGain.gain.value, t);
+      musicGain.gain.linearRampToValueAtTime(v ? 0.62 : 0.5, t + 0.15);
+    }
+  },
 };
 
 function ensureMusicGain() {
