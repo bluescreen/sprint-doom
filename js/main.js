@@ -5,7 +5,7 @@ import { buildLevel } from './level.js';
 import { buildProps } from './props.js';
 import { Player } from './player.js';
 import { Weapon } from './weapon.js';
-import { Boss, Projectiles } from './enemy.js';
+import { Boss, Adds, Projectiles } from './enemy.js';
 import { Pickups } from './pickups.js';
 import { SprintManager } from './tickets.js';
 import { Hud } from './hud.js';
@@ -40,6 +40,7 @@ buildProps(scene, level);
 const player = new Player(level);
 const weapon = new Weapon();
 const boss = new Boss(scene, level);
+const adds = new Adds(scene, level);
 const projectiles = new Projectiles(scene);
 const pickups = new Pickups(scene);
 const hud = new Hud();
@@ -51,7 +52,7 @@ let mouseDown = false;
 const keys = new Set();
 
 const sprint = new SprintManager({
-  level, player, boss, projectiles, weapon, hud, sfx, pickups,
+  level, player, boss, adds, projectiles, weapon, hud, sfx, pickups,
   onGameOver(results, total) {
     state = 'ended';
     music.stop();
@@ -156,16 +157,23 @@ function fire() {
   if (h > 1e-4) {
     wallT = level.raycastWall(player.pos.x, player.pos.z, _dir.x / h, _dir.z / h, CONFIG.weapon.range) / h;
   }
-  let hitT = Infinity;
-  if (boss.alive) {
-    _center.set(boss.pos.x, 1.9, boss.pos.z);
-    hitT = raySphereT(camera.position, _dir, _center, CONFIG.boss.hitRadius);
+  // Nearest hit among the customer and his consultants
+  let hitT = Infinity, target = null;
+  for (const e of [boss, ...adds.alive]) {
+    if (!e.alive) continue;
+    _center.set(e.pos.x, 1.9, e.pos.z);
+    const r = e === boss ? CONFIG.boss.hitRadius : CONFIG.boss.hitRadius * 0.8;
+    const t = raySphereT(camera.position, _dir, _center, r);
+    if (t < hitT) { hitT = t; target = e; }
   }
-  if (hitT < wallT && hitT < CONFIG.weapon.range) {
+  if (target && hitT < wallT && hitT < CONFIG.weapon.range) {
     weapon.hits++;
     sfx.hitEnemy();
-    const justDied = boss.takeDamage(CONFIG.weapon.damage * (0.8 + Math.random() * 0.4));
-    if (justDied) sprint.onBossKilled(time);
+    const justDied = target.takeDamage(CONFIG.weapon.damage * (0.8 + Math.random() * 0.4));
+    if (justDied) {
+      if (target === boss) sprint.onBossKilled(time);
+      else sfx.minionDie();
+    }
   }
 }
 
@@ -180,6 +188,7 @@ function update(dt) {
     hud.ticker(ex);
     sfx.excuse();
   });
+  adds.update(dt, player, time, projectiles);
 
   projectiles.update(dt, level, player, (dmg) => {
     const dead = player.damage(dmg);

@@ -226,6 +226,55 @@ export class Boss {
   }
 }
 
+// The customer's entourage: weaker consultant copies of the Boss state machine.
+// They pressure the player but don't gate the ticket — when the customer falls,
+// they retreat with him.
+export class Adds {
+  constructor(scene, level) {
+    this.level = level;
+    this.pool = Array.from({ length: 4 }, () => {
+      const m = new Boss(scene, level);
+      m.mesh.scale.set(0.78, 0.78, 1);
+      m.mat.color.set(0xa8b8c8); // gray-blue tint sets them apart from the boss
+      return m;
+    });
+  }
+
+  get alive() { return this.pool.filter(m => m.alive); }
+
+  spawn(cfg, room, count) {
+    const T = CONFIG.tileSize;
+    const mcfg = {
+      ...cfg,
+      hp: Math.max(10, Math.round(cfg.hp * 0.22)),
+      speed: cfg.speed * 1.15,
+      fireInterval: cfg.fireInterval * 1.6,
+      windup: cfg.windup * 1.2,
+      projDamage: Math.max(1, Math.round(cfg.projDamage * 0.5)),
+      projSpeed: cfg.projSpeed * 0.9,
+      volley: 1,
+      patterns: { single: 0.7, double: 0.3 },
+    };
+    for (const m of this.pool.slice(0, Math.min(count, this.pool.length))) {
+      for (let tries = 0; tries < 12; tries++) {
+        const c = room.x0 + 1 + ((Math.random() * (room.x1 - room.x0 - 1)) | 0);
+        const r = 12 + ((Math.random() * 6) | 0);
+        if (this.level.isSolidMove(c, r)) continue;
+        m.spawn(mcfg, { x: (c + 0.5) * T, z: (r + 0.5) * T });
+        break;
+      }
+    }
+  }
+
+  update(dt, player, time, projectiles) {
+    for (const m of this.pool) m.update(dt, player, time, projectiles, null);
+  }
+
+  despawnAll() {
+    for (const m of this.pool) m.despawn();
+  }
+}
+
 export class Projectiles {
   constructor(scene) {
     this.scene = scene;

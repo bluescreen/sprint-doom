@@ -30,6 +30,7 @@ export const CONFIG = {
   // hp/dmg/speed scale the customer, fire his fire interval, proj his projectile
   // speed, wind his windup (telegraph), volley = projectiles per shot (fan),
   // heal scales the coffee break between tickets.
+  // adds = consultants the customer brings along (entourage); +1 on tickets 4-5.
   // patterns = weighted attack pool (see PATTERNS in enemy.js):
   // single/double aimed fans · lead = predictive aim · mg = tracking burst ·
   // ring = 360° · wall = rolling wall with one gap · split/homing projectiles ·
@@ -37,17 +38,18 @@ export const CONFIG = {
   // wall ricochet · rain = barrage from above · cluster = lob detonating into a ring.
   skill: 2, // index into difficulties, set from the skill screen
   difficulties: [
-    { name: 'Ich bin noch in der Probezeit.', hp: 0.5, dmg: 0.5, speed: 0.85, fire: 1.5, proj: 0.9, wind: 1.3, volley: 1, heal: 1.5,
+    { name: 'Ich bin noch in der Probezeit.', hp: 0.5, dmg: 0.5, speed: 0.85, fire: 1.5, proj: 0.9, wind: 1.3, volley: 1, heal: 1.5, adds: 0,
       patterns: { single: 1 } },
-    { name: 'Hey, nicht vor dem ersten Kaffee.', hp: 0.8, dmg: 0.8, speed: 0.95, fire: 1.15, proj: 1, wind: 1.1, volley: 1, heal: 1.2,
+    { name: 'Hey, nicht vor dem ersten Kaffee.', hp: 0.8, dmg: 0.8, speed: 0.95, fire: 1.15, proj: 1, wind: 1.1, volley: 1, heal: 1.2, adds: 0,
       patterns: { single: 0.7, double: 0.3 } },
-    { name: 'Feilsch mich ordentlich runter.', hp: 1.15, dmg: 1.4, speed: 1.15, fire: 0.8, proj: 1.25, wind: 0.85, volley: 1, heal: 0.9,
-      patterns: { single: 0.35, double: 0.3, lead: 0.15, split: 0.1, bounce: 0.05, mg: 0.05 } },
-    { name: 'Ultra-Eskalation.', hp: 1.9, dmg: 2.5, speed: 1.5, fire: 0.5, proj: 1.7, wind: 0.6, volley: 2, heal: 0.6,
-      patterns: { double: 0.18, mg: 0.18, lead: 0.14, ring: 0.1, wall: 0.08, split: 0.08, homing: 0.08, spiral: 0.07, pincer: 0.06, bounce: 0.05 } },
+    { name: 'Feilsch mich ordentlich runter.', hp: 1.15, dmg: 1.3, speed: 1.15, fire: 0.85, proj: 1.25, wind: 0.85, volley: 1, heal: 0.9, adds: 1,
+      patterns: { single: 0.4, double: 0.3, lead: 0.15, split: 0.1, bounce: 0.05 } },
+    { name: 'Ultra-Eskalation.', hp: 1.9, dmg: 2.2, speed: 1.45, fire: 0.55, proj: 1.6, wind: 0.6, volley: 2, heal: 0.6, adds: 2,
+      patterns: { double: 0.2, mg: 0.14, lead: 0.14, ring: 0.1, wall: 0.08, split: 0.09, homing: 0.08, spiral: 0.07, pincer: 0.06, bounce: 0.04 } },
     // Albtraum is meant to be borderline unwinnable: the customer outruns you,
-    // two hits end a ticket, and the pool is all killer patterns.
-    { name: 'ALBTRAUM: FESTPREIS!', hp: 3.2, dmg: 5, speed: 2, fire: 0.3, proj: 2.3, wind: 0.4, volley: 4, heal: 0.35,
+    // two boss hits end a ticket, and up to four consultants keep a crossfire
+    // going — the boss's own spam is eased a notch to leave a sliver of hope.
+    { name: 'ALBTRAUM: FESTPREIS!', hp: 3.2, dmg: 5, speed: 2, fire: 0.35, proj: 2.3, wind: 0.4, volley: 3, heal: 0.35, adds: 3,
       patterns: { mg: 0.16, wall: 0.15, spiral: 0.12, lead: 0.12, rain: 0.1, double: 0.08, ring: 0.08, pincer: 0.08, cluster: 0.06, homing: 0.05 } },
   ],
 

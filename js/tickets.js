@@ -5,10 +5,11 @@ import { music } from './audio.js';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 export class SprintManager {
-  constructor({ level, player, boss, projectiles, weapon, hud, sfx, pickups, onGameOver }) {
+  constructor({ level, player, boss, adds, projectiles, weapon, hud, sfx, pickups, onGameOver }) {
     this.level = level;
     this.player = player;
     this.boss = boss;
+    this.adds = adds;
     this.projectiles = projectiles;
     this.weapon = weapon;
     this.hud = hud;
@@ -49,6 +50,9 @@ export class SprintManager {
     this.phase = 'fight';
     this.level.doors[this.current].locked = true; // Tür fällt hinter dir zu
     this.boss.spawn(cfg, room.bossSpawn);
+    const addCount = d.adds ? Math.min(4, d.adds + (base.id >= 4 ? 1 : 0)) : 0;
+    this.adds.spawn(cfg, room, addCount);
+    if (addCount) this.hud.ticker('Ich habe meine Berater mitgebracht!');
     this.weapon.resetStats();
     this.t0 = time;
     this.h0 = Math.max(1, this.player.health);
@@ -60,6 +64,7 @@ export class SprintManager {
 
   onBossKilled(time) {
     const cfg = this.cfg;
+    this.adds.despawnAll(); // the entourage leaves with the customer
     const t = time - this.t0;
     const timeFactor = clamp(1 - (t - cfg.parTime) / (2 * cfg.parTime), 0, 1);
     const acc = this.weapon.accuracy;
@@ -73,6 +78,7 @@ export class SprintManager {
   onPlayerDown(time) {
     const cfg = this.cfg;
     this.boss.despawn();
+    this.adds.despawnAll();
     this.projectiles.clear();
     this.player.health = CONFIG.player.respawnHealth;
     this.sfx.breakdown();
