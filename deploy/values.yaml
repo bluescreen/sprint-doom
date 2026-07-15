@@ -5,7 +5,7 @@ image:
   repository: gitlab-registry.dev.dwinternal.com/mmuschol/sprint-doom
   # Updated automatically by the CI pipeline after each successful build.
   # Format: sprint-doom-<branch-slug>-<short-sha>
-  tag: sprint-doom-main-0000000
+  tag: sprint-doom-main-108e7ab0
   pullPolicy: Always
 
 # The <name>-gitlab-registry pull secret is auto-provisioned per app/namespace
