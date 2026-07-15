@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Sprint Doom — Level-Viewer (QA)</title>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+</script>
+<style>html,body{margin:0;background:#111}canvas{display:block}</style>
+</head>
+<body>
+<script type="module">
+// QA-Viewer: rendert das Level ohne Spiel-Logik aus festen Kameraposen.
+// ?x=&z=&rx=&ry=&fov=  — Weltkoordinaten + Blickwinkel; ?top=1 — Draufsicht.
+import * as THREE from 'three';
+import { buildLevel } from '../js/level.js';
+import { buildProps } from '../js/props.js';
+
+const q = new URLSearchParams(location.search);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0d10);
+const level = buildLevel(scene);
+buildProps(scene, level);
+for (const d of level.doors) if (q.get('doors') === 'open') {
+  d.open = 1; d.mesh.position.y = d.baseY + (4 + 0.4);
+}
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+let cam;
+if (q.get('top')) {
+  cam = new THREE.OrthographicCamera(-105, 105, 45, -45, 0.1, 100);
+  cam.position.set(100, 50, 40); cam.up.set(0, 0, -1); cam.lookAt(100, 0, 40);
+} else {
+  cam = new THREE.PerspectiveCamera(+(q.get('fov') || 75), innerWidth / innerHeight, 0.1, 400);
+  cam.position.set(+(q.get('x') || 10), +(q.get('y') || 1.7), +(q.get('z') || 34));
+  cam.rotation.order = 'YXZ';
+  cam.rotation.y = +(q.get('ry') || 0);
+  cam.rotation.x = +(q.get('rx') || 0);
+}
+renderer.render(scene, cam);
+window.__qaReady = true;
+</script>
+</body>
+</html>

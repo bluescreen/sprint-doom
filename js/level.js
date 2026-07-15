@@ -6,12 +6,16 @@ import { CONFIG } from './config.js';
 import {
   makeWallTexture, makeFloorTexture, makeCeilingTexture, makeDoorTexture,
   makeGlassDoorTexture, makeBoardTexture, makeWindowTexture, makeGlassTexture,
-  makeSignTexture, makeVaultTexture,
+  makeSignTexture, makeVaultTexture, makeWoodDoorTexture, makeDarkWallTexture,
+  makePlasterCeilingTexture,
 } from './textures.js';
 
 const T = CONFIG.tileSize;
 
-// Legende: '#' Wand · '.' frei · 'W' Außenfenster · 'G' Glaswand · '1'–'5' Schiebetür Ticket-Raum
+// Legende: '#' Wand · '.' frei · 'W' Außenfenster · 'G' Glaswand · 'M' schwarzer
+// Mural-Block (Workshopraum-Front) · '1'–'5' Schiebetür Ticket-Raum.
+// Front nach den Fotos/dem Video: überwiegend weiße Wand, je ein Glasfeld neben
+// der Tür — nur der Workshopraum hat Glasfront + schwarzen Block.
 const MAP = [
   '##################################################',
   '#......#.....#.....#.....#...#.............#.....#',
@@ -22,7 +26,7 @@ const MAP = [
   '#......#.....#.....#.....#...#.............#.....#',
   '#####.####.#####.#####.####.##.............#######',
   '#................................................#',
-  '#GGG11GGGGGGGG22GGGG33GGGGGG44GGGGGGGG55GGGG##.###',
+  '###G11G######G22G##G33G##MMM44GGGG###G55G#####.###',
   '#...........#.....#.....#.........#.........#....#',
   '#...........#.....#.....#.........#.........#....W',
   '#...........#.....#.....#.........#.........#....W',
@@ -49,9 +53,9 @@ const ROOM_DEFS = [
 export function buildLevel(scene) {
   const ROWS = MAP.length, COLS = MAP[0].length;
 
-  // 0 = begehbar, 1 = Wand, 2 = Fenster, 3 = Glaswand (2/3 solide, eigene Textur)
+  // 0 = begehbar, 1 = Wand, 2 = Fenster, 3 = Glaswand, 4 = schwarzer Mural-Block
   const grid = MAP.map((row) => [...row].map((ch) =>
-    ch === '#' ? 1 : ch === 'W' ? 2 : ch === 'G' ? 3 : 0));
+    ch === '#' ? 1 : ch === 'W' ? 2 : ch === 'G' ? 3 : ch === 'M' ? 4 : 0));
 
   const rooms = ROOM_DEFS.map((def, i) => ({
     index: i,
@@ -68,6 +72,8 @@ export function buildLevel(scene) {
     if (ch >= '1' && ch <= '5') doorCols[+ch - 1].push(c);
   });
 
+  // Alle Meetingräume haben Glasschiebetüren (Fotos/Video); die Ahorn-Schiebetüren
+  // gehören zu den Nordräumen — siehe unten.
   const glassDoorTex = makeGlassDoorTexture();
   const doors = doorCols.map((cols, i) => {
     const c0 = cols[0], c1 = cols[cols.length - 1];
@@ -84,6 +90,21 @@ export function buildLevel(scene) {
       locked: i > 0, // nur Konferenzraum 1 ist anfangs frei
     };
   });
+
+  // Ahorn-Schiebetüren der Nordräume (Video/Foto IMG…080554): Scheunentor-Panels
+  // auf Laufschiene, aufgeschoben neben der Öffnung — rein dekorativ.
+  const woodDoorTex = makeWoodDoorTexture();
+  const woodDoorMat = new THREE.MeshBasicMaterial({ map: woodDoorTex });
+  const railMat = new THREE.MeshBasicMaterial({ color: 0x2a2d34 });
+  const NORTH_WALL_ROW = 7;
+  for (const c of [5, 10, 16, 22, 27]) {
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(3.6, 3.5, 0.14), woodDoorMat);
+    panel.position.set((c + 1.5) * T, 1.8, (NORTH_WALL_ROW + 1) * T + 0.14);
+    scene.add(panel);
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(2 * T, 0.09, 0.06), railMat);
+    rail.position.set((c + 1) * T, 3.62, (NORTH_WALL_ROW + 1) * T + 0.24);
+    scene.add(rail);
+  }
 
   function isSolid(c, r) {
     if (c < 0 || r < 0 || c >= COLS || r >= ROWS) return true;
@@ -148,9 +169,12 @@ export function buildLevel(scene) {
   // ---------- Geometrie: Wände, Fenster, Glaswände als InstancedMeshes ----------
   // Glas (Typ 3) rendert mit echter Transparenz; depthWrite aus, damit
   // Sprites (Kunde, Ausreden) dahinter korrekt durchscheinen.
-  const typeTex = { 1: makeWallTexture(), 2: makeWindowTexture(), 3: makeGlassTexture() };
+  const typeTex = {
+    1: makeWallTexture(), 2: makeWindowTexture(), 3: makeGlassTexture(),
+    4: makeDarkWallTexture(),
+  };
   const m = new THREE.Matrix4();
-  for (const type of [1, 2, 3]) {
+  for (const type of [1, 2, 3, 4]) {
     let count = 0;
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (grid[r][c] === type) count++;
     const im = new THREE.InstancedMesh(
@@ -183,10 +207,10 @@ export function buildLevel(scene) {
   floor.position.set(COLS * T / 2, 0, ROWS * T / 2);
   scene.add(floor);
 
-  // Flache Sichtbeton-Decke über den Räumen; die Konfizone (Zeilen 7–10) bleibt frei
-  // für das Tonnengewölbe.
-  const flatCeiling = (r0, r1) => {
-    const tex = makeCeilingTexture();
+  // Flache Decken über den Räumen; die Konfizone (Zeilen 7–10) bleibt frei für das
+  // Tonnengewölbe. Norden: Sichtbeton mit Technik — Süden (Meetingräume): weißer Putz
+  // mit Spots, wie auf den Raum-Fotos.
+  const flatCeiling = (r0, r1, tex) => {
     tex.repeat.set(COLS, r1 - r0);
     const p = new THREE.Mesh(
       new THREE.PlaneGeometry(COLS * T, (r1 - r0) * T),
@@ -196,8 +220,8 @@ export function buildLevel(scene) {
     p.position.set(COLS * T / 2, CONFIG.wallHeight, ((r0 + r1) / 2) * T);
     scene.add(p);
   };
-  flatCeiling(0, 8);
-  flatCeiling(9, ROWS);
+  flatCeiling(0, 8, makeCeilingTexture());
+  flatCeiling(9, ROWS, makePlasterCeilingTexture());
 
   // Tonnengewölbe über der schmalen Konfizone — der Bogen aus dem Flur-Foto (bow.png)
   const vaultTex = makeVaultTexture();

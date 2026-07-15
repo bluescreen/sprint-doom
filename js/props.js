@@ -2,6 +2,7 @@
 // Küchenzeile, Flügel — alles code-generiert aus Boxen + Canvas-Pixeltexturen.
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
+import { makeMuralTexture, makeCurtainTexture } from './textures.js';
 
 const T = CONFIG.tileSize;
 
@@ -96,26 +97,160 @@ function makeChair() {
   return gr;
 }
 
-function makeConfTable(len, dep) {
+function makeConfTable(len, dep, topMat = woodMat) {
   const gr = new THREE.Group();
-  const top = box(len, 0.12, dep, woodMat); top.position.y = 1.0; gr.add(top);
+  const top = box(len, 0.12, dep, topMat); top.position.y = 1.0; gr.add(top);
   for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-    const leg = box(0.1, 1.0, 0.1, midMat);
+    const leg = box(0.1, 1.0, 0.1, topMat === darkMat ? darkMat : midMat);
     leg.position.set(sx * (len / 2 - 0.25), 0.5, sz * (dep / 2 - 0.25));
     gr.add(leg);
   }
   return gr;
 }
 
+// Weißer Tulip-Tisch der Besprechungsräume (Foto: runder Tisch auf Trompetenfuß).
 function makeRoundTable() {
   const gr = new THREE.Group();
-  const top = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.1, 10), woodMat);
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.1, 10), whiteMat);
   top.position.y = 1.0; gr.add(top);
-  const pole = box(0.12, 0.95, 0.12, darkMat); pole.position.y = 0.5; gr.add(pole);
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.06, 8), darkMat);
-  base.position.y = 0.03; gr.add(base);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.2, 0.9, 8), whiteMat);
+  pole.position.y = 0.5; gr.add(pole);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.55, 0.08, 10), whiteMat);
+  base.position.y = 0.04; gr.add(base);
   return gr;
 }
+
+// ---------- Möbel nach den Referenzfotos (references/material) ----------
+// Warmer Teak-Langtisch — Konferenzraum 1.
+const teakMat = new THREE.MeshBasicMaterial({
+  map: ctex(32, 32, (g) => {
+    g.fillStyle = '#a5713a'; g.fillRect(0, 0, 32, 32);
+    g.fillStyle = '#96632f';
+    for (let y = 2; y < 32; y += 5) g.fillRect(0, y, 32, 1);
+    g.fillStyle = '#b57f46';
+    for (let i = 0; i < 30; i++) g.fillRect((Math.random() * 32) | 0, (Math.random() * 32) | 0, 3, 1);
+  }),
+});
+
+function makeWoodTable(len, dep) {
+  const gr = new THREE.Group();
+  const top = box(len, 0.14, dep, teakMat); top.position.y = 1.0; gr.add(top);
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const leg = box(0.18, 1.0, 0.18, teakMat);
+    leg.position.set(sx * (len / 2 - 0.12), 0.5, sz * (dep / 2 - 0.12));
+    gr.add(leg);
+  }
+  return gr;
+}
+
+// Eames-Schalenstuhl mit hellen Holzbeinen — die bunten Schalen aus den Fotos.
+const eamesLegMat = new THREE.MeshBasicMaterial({ color: 0xb99a68 });
+const eamesShellMats = {};
+function makeEamesChair(color) {
+  const mat = eamesShellMats[color] ??= new THREE.MeshBasicMaterial({ color });
+  const gr = new THREE.Group();
+  const seat = box(0.55, 0.07, 0.5, mat); seat.position.y = 0.52; gr.add(seat);
+  const back = box(0.55, 0.55, 0.07, mat);
+  back.position.set(0, 0.9, 0.26); back.rotation.x = 0.12; gr.add(back);
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const leg = box(0.05, 0.5, 0.05, eamesLegMat);
+    leg.position.set(sx * 0.2, 0.26, sz * 0.2);
+    gr.add(leg);
+  }
+  return gr;
+}
+
+// Chrom-Pendelleuchte (Dom-Schirm) über den Tischen.
+const chromeMat = new THREE.MeshBasicMaterial({ color: 0xb9bfc8 });
+const glowMat = new THREE.MeshBasicMaterial({ color: 0xffe2a8 });
+function makePendant(y = 2.6) {
+  const gr = new THREE.Group();
+  const cable = box(0.03, CONFIG.wallHeight - y, 0.03, darkMat);
+  cable.position.y = (CONFIG.wallHeight + y) / 2; gr.add(cable);
+  const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.34, 0.4, 10), chromeMat);
+  shade.position.y = y; gr.add(shade);
+  const glow = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.03, 10), glowMat);
+  glow.position.y = y - 0.21; gr.add(glow);
+  return gr;
+}
+
+// Graues Akustikpaneel-Band (gewellt) — Konferenzraum 1, Wand hinter dem Tisch.
+const acousticMat = new THREE.MeshBasicMaterial({
+  map: ctex(64, 32, (g) => {
+    g.fillStyle = '#5d6a74'; g.fillRect(0, 0, 64, 32);
+    for (let y = 0; y < 32; y += 4) {
+      g.fillStyle = '#526069'; g.fillRect(0, y, 64, 2);
+      g.fillStyle = '#69767f'; g.fillRect(0, y + 2, 64, 1);
+    }
+    g.fillStyle = '#3f4a52';
+    for (let x = 0; x < 64; x += 16) g.fillRect(x, 0, 1, 32);
+  }),
+});
+function makeAcousticBand(wdt, hgt) {
+  return new THREE.Mesh(new THREE.PlaneGeometry(wdt, hgt), acousticMat);
+}
+
+// Sperrholz-Tribüne mit Kissen — Workshopraum (Foto: zweistufige Sitztreppe).
+const plyMat = new THREE.MeshBasicMaterial({
+  map: ctex(32, 32, (g) => {
+    g.fillStyle = '#d9bc8d'; g.fillRect(0, 0, 32, 32);
+    g.fillStyle = '#cbab77';
+    for (const [x, y, w] of [[2, 6, 12], [18, 10, 10], [6, 20, 14], [20, 26, 9]]) g.fillRect(x, y, w, 2);
+    g.fillStyle = '#c2a068'; g.fillRect(15, 0, 1, 32);
+  }),
+});
+function makeTribune(len) {
+  const gr = new THREE.Group();
+  // vordere (niedrige) und hintere (hohe) Stufe, jeweils mit heller Deckplatte
+  const stepLo = box(len, 0.48, 0.9, plyMat); stepLo.position.set(0, 0.24, 0.5); gr.add(stepLo);
+  const topLo = box(len, 0.05, 0.94, whiteMat); topLo.position.set(0, 0.5, 0.5); gr.add(topLo);
+  const stepHi = box(len, 0.95, 0.9, plyMat); stepHi.position.set(0, 0.48, -0.42); gr.add(stepHi);
+  const topHi = box(len, 0.05, 0.94, whiteMat); topHi.position.set(0, 0.98, -0.42); gr.add(topHi);
+  // Kissen in den Farben der Fotos: Altrosa, Taupe, Senf
+  const cushions = ['#c98d96', '#9a8f80', '#d9a03f', '#c98d96', '#c98d96'];
+  cushions.forEach((c, i) => {
+    const k = box(0.62, 0.5, 0.14, eamesShellMats[c] ??= new THREE.MeshBasicMaterial({ color: c }));
+    k.position.set(-len / 2 + 0.8 + i * (len - 1.6) / (cushions.length - 1), 1.28, -0.78);
+    k.rotation.z = (Math.random() - 0.5) * 0.1;
+    gr.add(k);
+  });
+  return gr;
+}
+
+// Hoher Workshop-Tisch mit dunkler Platte + Barhocker (Foto/Video: Stehtisch).
+function makeHighTable(len, dep) {
+  const gr = new THREE.Group();
+  const top = box(len, 0.1, dep, darkMat); top.position.y = 1.35; gr.add(top);
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const leg = box(0.07, 1.35, 0.07, darkMat);
+    leg.position.set(sx * (len / 2 - 0.2), 0.68, sz * (dep / 2 - 0.2));
+    gr.add(leg);
+  }
+  return gr;
+}
+const barStoolMat = new THREE.MeshBasicMaterial({ color: 0x2b3038 });
+function makeBarStool() {
+  const gr = new THREE.Group();
+  const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.26, 0.12, 8), barStoolMat);
+  seat.position.y = 0.9; gr.add(seat);
+  const back = box(0.5, 0.3, 0.06, barStoolMat); back.position.set(0, 1.15, 0.22); gr.add(back);
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const leg = box(0.04, 0.9, 0.04, darkMat);
+    leg.position.set(sx * 0.18, 0.45, sz * 0.18); leg.rotation.z = sx * 0.08;
+    gr.add(leg);
+  }
+  return gr;
+}
+
+// Wandbild-Plane + Vorhang-Plane aus den geteilten Texturen.
+const makeMural = (variant, wdt, hgt) => new THREE.Mesh(
+  new THREE.PlaneGeometry(wdt, hgt),
+  new THREE.MeshBasicMaterial({ map: makeMuralTexture(variant) })
+);
+const curtainTex = makeCurtainTexture();
+curtainTex.repeat.set(3, 1);
+const curtainMat = new THREE.MeshBasicMaterial({ map: curtainTex, side: THREE.DoubleSide });
+const makeCurtain = (wdt, hgt = 3.5) => new THREE.Mesh(new THREE.PlaneGeometry(wdt, hgt), curtainMat);
 
 const plantTex = ctex(32, 48, (g) => {
   g.strokeStyle = '#2e6b34'; g.lineWidth = 2;
@@ -246,10 +381,11 @@ function makeCartonStack() {
   return gr;
 }
 
-// Küchenzeile mit Arbeitsplatte und Spüle.
-function makeCounter(len) {
+// Küchenzeile mit Arbeitsplatte und Spüle; die offene Kaffeebar der Konfizone
+// ist mattschwarz (Foto IMG…080509), die Küche 2 bleibt hell.
+function makeCounter(len, baseMat = whiteMat) {
   const gr = new THREE.Group();
-  const base = box(len, 0.95, 0.7, whiteMat); base.position.y = 0.48; gr.add(base);
+  const base = box(len, 0.95, 0.7, baseMat); base.position.y = 0.48; gr.add(base);
   const top = box(len + 0.08, 0.06, 0.78, darkMat); top.position.y = 0.99; gr.add(top);
   const sink = box(0.8, 0.02, 0.5, midMat); sink.position.set(-len / 4, 1.03, 0); gr.add(sink);
   return gr;
@@ -564,12 +700,20 @@ export function buildProps(scene, level) {
     scene.add(mesh);
   };
 
-  // ---------- Konferenzraum 1: lange Doppeltafel, 10 Plätze ----------
-  add(makeConfTable(5.6, 2.4), 23.2, 60);
-  add(makeConfTable(5.6, 2.4), 28.8, 60);
+  // ---------- Konferenzraum 1: ein langer Teak-Tisch, bunte Eames-Schalen,
+  // Chrom-Pendel + Akustikband — nach Foto IMG…080505 ----------
+  const eames = (color, x, z, ry) =>
+    add(makeEamesChair(color), x + (Math.random() - 0.5) * 0.4, z, ry + (Math.random() - 0.5) * 0.7);
+  add(makeWoodTable(11.2, 2.6), 26, 60);
   for (let c = 5; c <= 7; c++) { level.block(c, 14); level.block(c, 15); }
-  for (const x of [21.5, 24.3, 27.1, 29.9]) { chair(x, 57.4, Math.PI); chair(x, 62.6, 0); }
-  chair(18.9, 60, -Math.PI / 2); chair(33.1, 60, Math.PI / 2);
+  const k1Colors = ['#3fae5a', '#5db3d9', '#e8e6e0', '#d95b43'];
+  [21.5, 24.3, 27.1, 29.9].forEach((x, i) => {
+    eames(k1Colors[i], x, 57.4, Math.PI);
+    eames(k1Colors[(i + 2) % 4], x, 62.6, 0);
+  });
+  eames('#e8e6e0', 19.2, 60, -Math.PI / 2); eames('#3fae5a', 32.8, 60, Math.PI / 2);
+  for (const x of [22.5, 26, 29.5]) add(makePendant(2.6), x, 60);
+  wallPlane(makeAcousticBand(13, 1.15), 26, 1.05, 40.07);
   wallPlane(makeWhiteboard(), 4.06, 2.2, 60, Math.PI / 2);
   wallPlane(makePoster(0), 47.94, 2.6, 62, -Math.PI / 2);
   add(makePlant(), 6.5, 73); add(makePlant(), 45.5, 73.5);
@@ -582,42 +726,66 @@ export function buildProps(scene, level) {
     inner.rotation.x = -Math.PI / 2; inner.position.set(x, 0.03, z); scene.add(inner);
   };
 
-  // ---------- Besprechungsräume 1 + 2: runder Tisch, 4 Plätze ----------
+  // ---------- Besprechungsräume 1 + 2: weißer Tulip-Tisch auf blauem Teppich,
+  // bunte Eames-Schalen, Chrom-Pendel — nach Foto IMG…080608 ----------
+  const bColors = ['#d95b43', '#e8e6e0', '#8fb8cc', '#3fae5a'];
   for (const [cx, col] of [[62, 15], [86, 21]]) {
     blueRug(cx, 61);
     add(makeRoundTable(), cx, 61);
+    add(makePendant(2.5), cx, 61);
     level.block(col, 14); level.block(col, 15);
-    chair(cx, 58.2, Math.PI); chair(cx, 63.8, 0);
-    chair(cx - 2.7, 61, -Math.PI / 2); chair(cx + 2.7, 61, Math.PI / 2);
+    eames(bColors[0], cx, 58.2, Math.PI); eames(bColors[1], cx, 63.8, 0);
+    eames(bColors[2], cx - 2.7, 61, -Math.PI / 2); eames(bColors[3], cx + 2.7, 61, Math.PI / 2);
   }
-  wallPlane(makePoster(1), 52.06, 2.4, 66, Math.PI / 2);
+  // Design-Bibliothek an der Westwand von Besprechungsraum 1 (Foto IMG…080609)
+  add(makeShelf(shelfMats()), 52.45, 66, Math.PI / 2); level.block(13, 16);
+  wallPlane(makePoster(1), 52.06, 2.4, 60, Math.PI / 2);
   wallPlane(makePoster(2), 95.94, 2.4, 66, -Math.PI / 2);
   add(makePlant(), 69.3, 73.2); add(makePlant(), 93.4, 73.2);
 
-  // ---------- Workshopraum: Arbeitstisch, Whiteboard, Sideboard ----------
-  add(makeConfTable(4.8, 2.2), 112, 61);
+  // ---------- Workshopraum: Stehtisch + Barhocker, Sperrholz-Tribüne, Vorhang
+  // hinter der Glasfront — nach Fotos IMG…080533/080539 ----------
+  add(makeHighTable(4.8, 1.6), 112, 61);
   level.block(27, 14); level.block(27, 15); level.block(28, 14); level.block(28, 15);
-  chair(110.5, 58.6, Math.PI); chair(113.5, 58.6, Math.PI);
-  chair(110.5, 63.4, 0); chair(113.5, 63.4, 0);
+  for (const [x, z, ry] of [
+    [110.5, 59.4, Math.PI], [113.5, 59.4, Math.PI],
+    [110.5, 62.6, 0], [113.5, 62.6, 0], [108.9, 61, -Math.PI / 2], [115.1, 61, Math.PI / 2],
+  ]) add(makeBarStool(), x + (Math.random() - 0.5) * 0.3, z, ry + (Math.random() - 0.5) * 0.5);
+  // Tribüne innen vor dem schwarzen Mural-Block (Nordfront, westlich der Glastür)
+  add(makeTribune(11), 106, 41.0);
+  for (const c of [25, 26, 27]) level.block(c, 10);
+  // Vorhang innen an der Glasfront
+  wallPlane(makeCurtain(13.5), 128, 1.76, 41.1);
   wallPlane(makeWhiteboard(), 135.94, 2.2, 60, -Math.PI / 2);
   add(makeShelf(shelfMats()), 126, 48.9); level.block(31, 12);
-  wallPlane(makePoster(4), 100.06, 2.4, 56, Math.PI / 2);
   add(makePlant(), 103, 73.4); add(makePlant(), 133, 50);
 
-  // ---------- Konferenzraum 2: zwei Tische, Sideboard ----------
-  add(makeConfTable(5.6, 2.4), 158, 57.5);
-  add(makeConfTable(5.6, 2.4), 158, 64.5);
+  // ---------- Konferenzraum 2: zwei schwarze Tische, Video-Setup vor dem hellen
+  // Mural, Sideboard — nach Foto IMG…080618 ----------
+  add(makeConfTable(5.6, 2.4, darkMat), 158, 57.5);
+  add(makeConfTable(5.6, 2.4, darkMat), 158, 64.5);
   for (let c = 38; c <= 40; c++) { level.block(c, 14); level.block(c, 16); }
   for (const x of [155.8, 158, 160.2]) { chair(x, 54.9, Math.PI); chair(x, 67.1, 0); }
   chair(154.6, 61, -Math.PI / 2); chair(161.4, 61, Math.PI / 2);
   add(makeShelf(shelfMats()), 141, 60, Math.PI / 2); level.block(35, 14); level.block(35, 15);
-  wallPlane(makePoster(3), 175.94, 2.4, 56, -Math.PI / 2);
+  // helles Wandbild an der Ostwand, davor die beiden Konferenz-Displays
+  wallPlane(makeMural('light', 8, 3.6), 175.9, 1.95, 58, -Math.PI / 2);
+  add(makeWallScreen(), 175.6, 55.6, -Math.PI / 2);
+  add(makeWallScreen(), 175.6, 60.4, -Math.PI / 2);
   add(makePlant(), 173.4, 73.2);
 
-  // ---------- Flügelraum ----------
+  // ---------- Flügelraum: Flügel, Vorhangwand + schwarzes Würfel-Sideboard
+  // (Fotos IMG…080527) ----------
   add(makePiano(), 188, 64, -0.6);
   level.block(46, 15); level.block(47, 15); level.block(46, 16); level.block(47, 16);
+  wallPlane(makeCurtain(11), 180.3, 1.76, 66, Math.PI / 2);
+  const cubeBoard = box(3.4, 1.05, 0.55, darkMat);
+  cubeBoard.position.y = 0.53;
+  add(cubeBoard, 194.2, 52.5); level.block(48, 13);
   add(makePlant(), 181.5, 73);
+
+  // Dunkles Wandbild auf dem schwarzen Block der Workshopraum-Front (Konfizone)
+  wallPlane(makeMural('dark', 11.4, 3.8), 106, 1.95, 35.93, Math.PI);
 
   // ---------- Technikraum: Mainframes + Admin-Platz ----------
   for (const x of [7, 10, 13]) { add(makeMainframe(), x, 4.6); blockAt(x, 4.6); }
@@ -653,8 +821,8 @@ export function buildProps(scene, level) {
 
   // ---------- Lounge/Küche (offen zur Konfizone) ----------
   // L-förmige Küchenzeile in der Nordost-Ecke + Kaffeemaschine
-  add(makeCounter(8), 162, 4.55); level.block(39, 1); level.block(40, 1); level.block(41, 1);
-  add(makeCounter(3), 170.9, 6.1, Math.PI / 2); level.block(42, 1);
+  add(makeCounter(8, darkMat), 162, 4.55); level.block(39, 1); level.block(40, 1); level.block(41, 1);
+  add(makeCounter(3, darkMat), 170.9, 6.1, Math.PI / 2); level.block(42, 1);
   add(makeCoffeeMachine(), 170.6, 9.5, -Math.PI / 2); level.block(42, 2);
   // Drei lange Tische direkt neben der Küche — wie im Grundriss gestapelt
   for (const z of [6.8, 11.2, 15.6]) {
