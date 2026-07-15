@@ -1,0 +1,28 @@
+replicaCount: 1
+
+# nginx image built from the repo-root Dockerfile (COPY of index.html, css/, js/, assets/).
+image:
+  repository: gitlab-registry.dev.dwinternal.com/mmuschol/sprint-doom
+  # Updated automatically by the CI pipeline after each successful build.
+  # Format: sprint-doom-<branch-slug>-<short-sha>
+  tag: sprint-doom-main-0000000
+  pullPolicy: Always
+
+# The <name>-gitlab-registry pull secret is auto-provisioned per app/namespace
+# (platform default since 2026-07) and referenced directly in deployment.yaml —
+# no imagePullSecrets value needed here.
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 32Mi
+  limits:
+    memory: 64Mi
+
+# Injected by ArgoCD from the appset entry — never hardcode real values here.
+name: ""
+branch: ""
+project: ""
+rootDomain: ""
+databaseName: ""
+namespace: ""

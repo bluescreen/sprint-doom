@@ -1,0 +1,4 @@
+apiVersion: v2
+name: sprint-doom
+version: 0.1.0
+description: nginx serving SPRINT DOOM (static three.js game) from a built image
